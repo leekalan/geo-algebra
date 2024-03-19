@@ -54,7 +54,7 @@ impl CliffordObject {
             let child = CliffordObject::new(new_type);
             data.push(child);
         }
-        
+
         CliffordObject {
             clifford_type,
             scalar: 0f32,

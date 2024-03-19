@@ -1,4 +1,5 @@
 pub mod clifford;
+pub mod collect;
 pub mod geo_algebra;
 pub mod geo_map;
 
@@ -6,8 +7,8 @@ pub mod geo_map;
 mod tests {
     use super::*;
 
-    use geo_algebra::GA;
     use clifford::{CliffordObject, CliffordType};
+    use geo_algebra::GA;
 
     #[test]
     fn test() {
