@@ -24,9 +24,9 @@ mod tests {
     #[test]
     fn test2() {
         let clifford = CliffordObject::new(CliffordType::new(2, 0, 0));
-        let m_c = clifford.shallow_map(ShallowMap::new(HashMap::from([(0, 1),(1, 0)])));
+        let m_c = clifford.shallow_map(ShallowMap::new(HashMap::from([(0, 1), (1, 0)])));
         let m2_c = m_c.shallow_map(ShallowMap::new(HashMap::from([(1, 2), (2, 1)])));
         let m_c_collapsed = m2_c.collect();
-        println!("{:?}\n{:?}\n{:?}", m_c, m2_c, m_c_collapsed);
+        println!("{:?}\n{:?}\n{:?}", m_c.map, m2_c.map, m_c_collapsed.map);
     }
 }
