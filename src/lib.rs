@@ -6,11 +6,12 @@ pub mod geo_map;
 mod tests {
     use super::*;
 
+    use geo_algebra::GA;
     use clifford::{CliffordObject, CliffordType};
 
     #[test]
     fn test() {
         let clifford = CliffordObject::new(CliffordType::new(1, 0, 0));
-        println!("{clifford:?}");
+        println!("{:?}", clifford.get(&[0]))
     }
 }

@@ -49,7 +49,7 @@ impl CliffordObject {
         let mut data = Vec::with_capacity(count);
 
         let mut new_type = clifford_type;
-        for k in 0..count {
+        for _ in 0..count {
             new_type = new_type.consume().unwrap();
             let child = CliffordObject::new(new_type);
             data.push(child);
@@ -64,6 +64,10 @@ impl CliffordObject {
 }
 impl GA for CliffordObject {
     fn get(&self, index: &[usize]) -> Option<f32> {
-        todo!()
+        let k = match index.first() {
+            Some(v) => *v,
+            None => return Some(self.scalar),
+        };
+        self.data.get(k)?.get(&index[1..])
     }
 }
