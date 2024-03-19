@@ -1,5 +1,9 @@
-use crate::{geo_algebra::GA, geo_map::MappedGA};
+use crate::{deep_map::DeepMappedGA, geo_algebra::GA, shallow_map::ShallowMappedGA};
 
-pub trait CollectFrom: GA {
-    fn collect_from(mapped: MappedGA<Self>) -> Self;
+pub trait CollectFromShallow<T>: GA {
+    fn collect_from_shallow(mapped: &ShallowMappedGA<Self>) -> T;
+}
+
+pub trait CollectFromDeep<T>: GA {
+    fn collect_from_deep(mapped: &DeepMappedGA<Self>) -> T;
 }
