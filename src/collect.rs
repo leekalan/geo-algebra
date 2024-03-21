@@ -1,9 +1,15 @@
-use crate::{deep_map::DeepMappedGA, geo_algebra::GA, shallow_map::ShallowMappedGA};
-
-pub trait CollectFromShallow<T>: GA {
-    fn collect_from_shallow(mapped: &ShallowMappedGA<Self>) -> T;
+pub trait Inject<U> {
+    fn inject(self, target: U) -> U;
 }
 
-pub trait CollectFromDeep<T>: GA {
-    fn collect_from_deep(mapped: &DeepMappedGA<Self>) -> T;
+pub trait Compose<T> {
+    fn compose(&mut self, target: T);
+}
+
+impl<T, U: Compose<T>> Inject<U> for T {
+    fn inject(self, target: U) -> U {
+        let mut target = target;
+        target.compose(self);
+        target
+    }
 }
