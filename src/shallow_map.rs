@@ -1,7 +1,9 @@
-use std::{collections::HashMap, task::Context};
+use std::collections::HashMap;
 
 use crate::{
-    compose::{Compose, ComposeRef, ComposeSelf}, deep_map::DeepMap, geo_algebra::GA, inject::Inject
+    compose::{Compose, ComposeRef, ComposeSelf},
+    deep_map::DeepMap,
+    geo_algebra::GA,
 };
 
 #[derive(Debug, Clone)]
@@ -35,12 +37,17 @@ impl ComposeSelf<ShallowMap> for ShallowMap {
         self.map.extend(contents.map);
     }
 }
-impl<G: GA> ComposeRef<G, ShallowMappedGA<'_, G>> for ShallowMap {
+impl<'a, G: GA> ComposeRef<'a, G, ShallowMappedGA<'a, G>> for ShallowMap {
     fn compose_ref(self, contents: &G) -> ShallowMappedGA<G> {
         ShallowMappedGA {
             internal: contents,
             map: self,
         }
+    }
+}
+impl<'a, T: GA> Compose<ShallowMappedGA<'a, T>, ShallowMappedGA<'a, T>> for ShallowMap {
+    fn compose(self, contents: ShallowMappedGA<T>) -> ShallowMappedGA<T> {
+        self.compose(contents.map).compose_ref(contents.internal)
     }
 }
 
