@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, task::Context};
 
 use crate::{
-    collect::Compose, deep_map::DeepMap, geo_algebra::GA
+    compose::{Compose, ComposeRef, ComposeSelf}, deep_map::DeepMap, geo_algebra::GA, inject::Inject
 };
 
 #[derive(Debug, Clone)]
@@ -24,15 +24,23 @@ impl ShallowMap {
         todo!()
     }
 }
-impl Compose<ShallowMap> for ShallowMap {
-    fn compose(&mut self, other: Self) {
-        let mut other = other;
+impl ComposeSelf<ShallowMap> for ShallowMap {
+    fn compose_self(&mut self, contents: ShallowMap) {
+        let mut contents = contents;
         for value in self.map.values_mut() {
-            if let Some(value_o) = other.map.remove(value) {
+            if let Some(value_o) = contents.map.remove(value) {
                 *value = value_o;
             }
         }
-        self.map.extend(other.map);
+        self.map.extend(contents.map);
+    }
+}
+impl<G: GA> ComposeRef<G, ShallowMappedGA<'_, G>> for ShallowMap {
+    fn compose_ref(self, contents: &G) -> ShallowMappedGA<G> {
+        ShallowMappedGA {
+            internal: contents,
+            map: self,
+        }
     }
 }
 
@@ -48,12 +56,6 @@ impl<'a, T: GA> ShallowMappedGA<'a, T> {
 
     pub fn get_internal(self) -> &'a T {
         self.internal
-    }
-
-    pub fn compose(&mut self, map: ShallowMap) {
-        let mut map = map;
-        std::mem::swap(&mut self.map, &mut map);
-        self.map.compose(map);
     }
 }
 impl<T: GA> GA for ShallowMappedGA<'_, T> {

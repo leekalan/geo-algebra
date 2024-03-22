@@ -1,14 +1,9 @@
-use crate::{collect::Compose, geo_algebra::GA};
+use crate::{compose::Compose, geo_algebra::GA};
 
 #[derive(Debug, Clone)]
 pub struct DeepMap {}
 impl DeepMap {
     pub fn map(&self, index: &[usize]) -> Box<[usize]> {
-        todo!()
-    }
-}
-impl Compose<DeepMap> for DeepMap {
-    fn compose(&mut self, other: Self) {
         todo!()
     }
 }
@@ -25,12 +20,6 @@ impl<'a, T: GA> DeepMappedGA<'a, T> {
 
     pub fn get_internal(self) -> &'a T {
         self.internal
-    }
-
-    pub fn compose(&mut self, map: DeepMap) {
-        let mut map = map;
-        std::mem::swap(&mut self.map, &mut map);
-        self.map.compose(map);
     }
 }
 impl<T: GA> GA for DeepMappedGA<'_, T> {

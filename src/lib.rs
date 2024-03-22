@@ -1,5 +1,6 @@
 pub mod clifford;
-pub mod collect;
+pub mod compose;
+pub mod inject;
 pub mod deep_map;
 pub mod geo_algebra;
 pub mod shallow_map;
