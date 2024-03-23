@@ -1,7 +1,7 @@
+use wrappr::injectable::InjectableRef;
+
 use crate::{
-    compose::ComposeRef,
     deep_map::{DeepMap, DeepMappedGA},
-    inject::InjectRef,
     shallow_map::{ShallowMap, ShallowMappedGA},
 };
 
@@ -11,6 +11,6 @@ pub trait GA: Sized {
         self.inject_ref(map)
     }
     fn create_deep_map(&self, map: DeepMap) -> DeepMappedGA<Self> {
-        map.compose_ref(self)
+        self.inject_ref(map)
     }
 }

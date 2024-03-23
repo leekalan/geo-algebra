@@ -5,3 +5,12 @@ version = 3
 [[package]]
 name = "geo-algebra"
 version = "0.1.0"
+dependencies = [
+ "wrappr",
+]
+
+[[package]]
+name = "wrappr"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d7c2249beae47f591e9037c0bf1d7cbed2a50ab493daa826060223370239756"

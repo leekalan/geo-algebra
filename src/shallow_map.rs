@@ -1,10 +1,11 @@
-use std::collections::HashMap;
+use std::{borrow::Borrow, collections::HashMap};
 
-use crate::{
-    compose::{Compose, ComposeRef, ComposeSelf},
-    deep_map::DeepMap,
-    geo_algebra::GA,
+use wrappr::{
+    composer::Composer,
+    wrapper::{Wrapper, WrapperRef},
 };
+
+use crate::{deep_map::DeepMap, geo_algebra::GA};
 
 #[derive(Debug, Clone)]
 pub struct ShallowMap {
@@ -26,8 +27,8 @@ impl ShallowMap {
         todo!()
     }
 }
-impl ComposeSelf<ShallowMap> for ShallowMap {
-    fn compose_self(&mut self, contents: ShallowMap) {
+impl Composer<ShallowMap> for ShallowMap {
+    fn compose(&mut self, contents: ShallowMap) -> &mut Self {
         let mut contents = contents;
         for value in self.map.values_mut() {
             if let Some(value_o) = contents.map.remove(value) {
@@ -35,19 +36,21 @@ impl ComposeSelf<ShallowMap> for ShallowMap {
             }
         }
         self.map.extend(contents.map);
+        self
     }
 }
-impl<'a, G: GA> ComposeRef<'a, G, ShallowMappedGA<'a, G>> for ShallowMap {
-    fn compose_ref(self, contents: &G) -> ShallowMappedGA<G> {
+impl<'a, G: GA> WrapperRef<'a, G, ShallowMappedGA<'a, G>> for ShallowMap {
+    fn wrap_ref(self, contents: &'a impl Borrow<G>) -> ShallowMappedGA<'a, G> {
         ShallowMappedGA {
-            internal: contents,
+            internal: contents.borrow(),
             map: self,
         }
     }
 }
-impl<'a, T: GA> Compose<ShallowMappedGA<'a, T>, ShallowMappedGA<'a, T>> for ShallowMap {
-    fn compose(self, contents: ShallowMappedGA<T>) -> ShallowMappedGA<T> {
-        self.compose(contents.map).compose_ref(contents.internal)
+impl<'a, T: GA> Wrapper<ShallowMappedGA<'a, T>, ShallowMappedGA<'a, T>> for ShallowMap {
+    fn wrap(mut self, contents: ShallowMappedGA<T>) -> ShallowMappedGA<T> {
+        self.compose(contents.map);
+        self.wrap_ref(contents.internal)
     }
 }
 

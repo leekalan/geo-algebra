@@ -1,15 +1,11 @@
 pub mod clifford;
-pub mod compose;
 pub mod deep_map;
 pub mod geo_algebra;
-pub mod inject;
 pub mod shallow_map;
 
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-
-    use crate::{compose::Compose, inject::Inject};
 
     use self::shallow_map::ShallowMap;
 
@@ -17,6 +13,7 @@ mod tests {
 
     use clifford::{CliffordObject, CliffordType};
     use geo_algebra::GA;
+    use wrappr::composer::Composer;
 
     #[test]
     fn test1() {
@@ -29,10 +26,9 @@ mod tests {
         let map1 = ShallowMap::new(HashMap::from([(0, 1), (1, 0)]));
         let map2 = ShallowMap::new(HashMap::from([(0, 1), (1, 2), (2, 0)]));
 
-        println!("{:?}\n{:?}", map1, map2);
+        let mut composed_map = map2.clone();
+        composed_map.compose(map1.clone());
 
-        let composed_map = map2.compose(map1);
-
-        println!("{:?}", composed_map);
+        println!("{:?}\n{:?}\n{:?}", map1, map2, composed_map);
     }
 }

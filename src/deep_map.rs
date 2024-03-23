@@ -1,7 +1,11 @@
-use crate::{
-    compose::{Compose, ComposeRef, ComposeSelf},
-    geo_algebra::GA,
+use std::borrow::Borrow;
+
+use wrappr::{
+    composer::Composer,
+    wrapper::{Wrapper, WrapperRef},
 };
+
+use crate::geo_algebra::GA;
 
 #[derive(Debug, Clone)]
 pub struct DeepMap {}
@@ -10,22 +14,23 @@ impl DeepMap {
         todo!()
     }
 }
-impl ComposeSelf<DeepMap> for DeepMap {
-    fn compose_self(&mut self, contents: DeepMap) {
+impl Composer<DeepMap> for DeepMap {
+    fn compose(&mut self, contents: DeepMap) -> &mut Self {
         todo!()
     }
 }
-impl<'a, G: GA> ComposeRef<'a, G, DeepMappedGA<'a, G>> for DeepMap {
-    fn compose_ref(self, contents: &G) -> DeepMappedGA<G> {
+impl<'a, G: GA> WrapperRef<'a, G, DeepMappedGA<'a, G>> for DeepMap {
+    fn wrap_ref(self, contents: &'a impl Borrow<G>) -> DeepMappedGA<'a, G> {
         DeepMappedGA {
-            internal: contents,
+            internal: contents.borrow(),
             map: self,
         }
     }
 }
-impl<'a, T: GA> Compose<DeepMappedGA<'a, T>, DeepMappedGA<'a, T>> for DeepMap {
-    fn compose(self, contents: DeepMappedGA<T>) -> DeepMappedGA<T> {
-        self.compose(contents.map).compose_ref(contents.internal)
+impl<'a, T: GA> Wrapper<DeepMappedGA<'a, T>, DeepMappedGA<'a, T>> for DeepMap {
+    fn wrap(mut self, contents: DeepMappedGA<T>) -> DeepMappedGA<T> {
+        self.compose(contents.map);
+        self.wrap_ref(contents.internal)
     }
 }
 
