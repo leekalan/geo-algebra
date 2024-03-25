@@ -63,11 +63,11 @@ impl CliffordObject {
     }
 }
 impl GA for CliffordObject {
-    fn get(&self, index: &[usize]) -> Option<f32> {
+    fn get_multi(&self, index: &[usize]) -> Option<f32> {
         let k = match index.first() {
             Some(v) => *v,
             None => return Some(self.scalar),
         };
-        self.data.get(k)?.get(&index[1..])
+        self.data.get(k)?.get_multi(&index[1..])
     }
 }

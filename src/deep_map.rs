@@ -49,8 +49,8 @@ impl<'a, T: GA> DeepMappedGA<'a, T> {
     }
 }
 impl<T: GA> GA for DeepMappedGA<'_, T> {
-    fn get(&self, index: &[usize]) -> Option<f32> {
+    fn get_multi(&self, index: &[usize]) -> Option<f32> {
         let arr = self.map.map(index);
-        self.internal.get(&arr)
+        self.internal.get_multi(&arr)
     }
 }

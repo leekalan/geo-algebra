@@ -2,6 +2,7 @@ pub mod clifford;
 pub mod deep_map;
 pub mod geo_algebra;
 pub mod shallow_map;
+pub mod vector;
 
 #[cfg(test)]
 mod tests {
@@ -18,7 +19,7 @@ mod tests {
     #[test]
     fn test1() {
         let clifford = CliffordObject::new(CliffordType::new(1, 0, 0));
-        println!("{:?}", clifford.get(&[0]))
+        println!("{:?}", clifford.get_multi(&[0]))
     }
 
     #[test]

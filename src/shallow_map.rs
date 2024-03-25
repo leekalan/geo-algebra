@@ -69,8 +69,8 @@ impl<'a, T: GA> ShallowMappedGA<'a, T> {
     }
 }
 impl<T: GA> GA for ShallowMappedGA<'_, T> {
-    fn get(&self, index: &[usize]) -> Option<f32> {
+    fn get_multi(&self, index: &[usize]) -> Option<f32> {
         let arr: Box<[usize]> = index.iter().map(|x| self.map.map(*x)).collect();
-        self.internal.get(&arr)
+        self.internal.get_multi(&arr)
     }
 }

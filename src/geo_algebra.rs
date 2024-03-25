@@ -1,16 +1,15 @@
+pub mod dot_product;
+pub mod identity;
+pub mod inversible;
+pub mod multiply;
+pub mod sum;
+pub mod create_shallow_map;
+pub mod create_deep_map;
+
+use std::borrow::Borrow;
+
 use wrappr::injectable::InjectableRef;
 
-use crate::{
-    deep_map::{DeepMap, DeepMappedGA},
-    shallow_map::{ShallowMap, ShallowMappedGA},
-};
-
 pub trait GA: Sized {
-    fn get(&self, index: &[usize]) -> Option<f32>;
-    fn create_shallow_map(&self, map: ShallowMap) -> ShallowMappedGA<Self> {
-        self.inject_ref(map)
-    }
-    fn create_deep_map(&self, map: DeepMap) -> DeepMappedGA<Self> {
-        self.inject_ref(map)
-    }
+    fn get_multi(&self, index: &[usize]) -> Option<f32>;
 }
