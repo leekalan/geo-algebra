@@ -11,6 +11,6 @@ dependencies = [
 
 [[package]]
 name = "wrappr"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d7c2249beae47f591e9037c0bf1d7cbed2a50ab493daa826060223370239756"
+checksum = "0d2806cb04949032ea4a616bd83def951329ef21d4f9719846d70ddd116b677e"

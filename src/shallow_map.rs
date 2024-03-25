@@ -9,7 +9,7 @@ use crate::{deep_map::DeepMap, geo_algebra::GA};
 
 #[derive(Debug, Clone)]
 pub struct ShallowMap {
-    map: HashMap<usize, usize>,
+    pub map: HashMap<usize, usize>,
 }
 impl ShallowMap {
     pub fn new(map: HashMap<usize, usize>) -> Self {
@@ -29,13 +29,7 @@ impl ShallowMap {
 }
 impl Composer<ShallowMap> for ShallowMap {
     fn compose(&mut self, contents: ShallowMap) -> &mut Self {
-        let mut contents = contents;
-        for value in self.map.values_mut() {
-            if let Some(value_o) = contents.map.remove(value) {
-                *value = value_o;
-            }
-        }
-        self.map.extend(contents.map);
+        self.map.compose(contents.map);
         self
     }
 }

@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use wrappr::wrapper::Wrapper;
+
 use crate::{geo_algebra::{dot_product::DotProduct, create_shallow_map::CreateShallowMap, sum::Sum, GA}, shallow_map::{ShallowMap, ShallowMappedGA}};
 
 use super::Vector;
@@ -22,7 +24,7 @@ impl<'a> CreateShallowMap<'a> for DynamicVector {
     type Result = Self;
 
     fn create_shallow_map(&'a self, map: ShallowMap) -> Self::Result {
-        
+        DynamicVector{data: map.map.wrap(self.data)}
     }
 }
 
