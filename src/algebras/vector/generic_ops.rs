@@ -201,6 +201,11 @@ mod dot {
             Scalar::new(scalar)
         }
     }
+    impl<T: Vectorize> GenericVector<T> {
+        pub fn dot<U: Vectorize>(self, other: U) -> Scalar {
+            self.dot_ga(other)
+        }
+    }
 
     impl<T: Vectorize, U: Vectorize> DotRefGA<GenericVectorRef<'_, U>> for GenericVector<T> {
         type Output = Scalar;

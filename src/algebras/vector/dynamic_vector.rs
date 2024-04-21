@@ -1,3 +1,5 @@
+pub mod ops;
+
 use crate::{
     enumerate_ga::{EnumerateAndSortGA, EnumerateGA},
     index_ga::{TryIndexGA, TryIndexGAMut},
