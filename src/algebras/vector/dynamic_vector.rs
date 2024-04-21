@@ -1,7 +1,5 @@
 use crate::{
-    enumerate_sa::{EnumerateAndSortSA, EnumerateSA},
-    index_sa::{TryIndexSA, TryIndexSAMut},
-    size_sa::{RangeSA, SizeSA},
+    enumerate_ga::{EnumerateAndSortGA, EnumerateGA}, index_ga::{TryIndexGA, TryIndexGAMut}, iterate_values_ga::IterateValuesGA, size_ga::{RangeGA, SizeGA}
 };
 
 use super::{SparseVector, Vectorize};
@@ -80,30 +78,42 @@ impl IntoIterator for DynamicVector {
     }
 }
 
-impl TryIndexSA<usize> for DynamicVector {
+impl TryIndexGA<usize> for DynamicVector {
     fn try_at(&self, index: usize) -> Option<&f64> {
         self.dimensions.get(index)
     }
 }
 
-impl TryIndexSAMut<usize> for DynamicVector {
+impl TryIndexGAMut<usize> for DynamicVector {
     fn try_at_mut(&mut self, index: usize) -> Option<&mut f64> {
         self.dimensions.get_mut(index)
     }
 }
 
-impl SizeSA for DynamicVector {
+impl SizeGA for DynamicVector {
     fn size(&self) -> usize {
         self.dimensions.len()
     }
 }
-impl RangeSA for DynamicVector {
+impl RangeGA for DynamicVector {
     fn range(&self) -> usize {
         self.dimensions.len()
     }
 }
 
-impl EnumerateSA<usize> for DynamicVector {
+impl IterateValuesGA for DynamicVector {
+    fn iterate_values(&self) -> impl Iterator<Item = &f64> {
+        self.iter()
+    }
+    fn iterate_values_mut(&mut self) -> impl Iterator<Item = &mut f64> {
+        self.iter_mut()
+    }
+    fn into_iterate_values(self) -> impl Iterator<Item = f64> {
+        self.into_iter()
+    }
+}
+
+impl EnumerateGA<usize> for DynamicVector {
     fn enumerate(&self) -> impl Iterator<Item = (usize, &f64)> {
         self.iter().enumerate()
     }
@@ -114,7 +124,7 @@ impl EnumerateSA<usize> for DynamicVector {
         self.into_iter().enumerate()
     }
 }
-impl EnumerateAndSortSA<usize> for DynamicVector {
+impl EnumerateAndSortGA<usize> for DynamicVector {
     fn enumerate_and_sort(&self) -> impl Iterator<Item = (usize, &f64)> {
         self.enumerate()
     }
@@ -136,10 +146,7 @@ mod tests {
 
     #[test]
     fn test_extend_sparse_vector() {
-        let sparse_vector = SparseVector::new(HashMap::from([
-            (2, 3.),
-            (4, 7.),
-        ]));
+        let sparse_vector = SparseVector::new(HashMap::from([(2, 3.), (4, 7.)]));
         let vector = DynamicVector::from_sparse_vector(sparse_vector);
         assert_eq!(5, vector.size());
         assert_eq!(5, vector.range());
@@ -150,7 +157,6 @@ mod tests {
         assert_eq!(Some(&7.), vector.try_at(4));
         assert_eq!(None, vector.try_at(5));
     }
-
 
     #[test]
     fn test_sort_dynamic_vector() {

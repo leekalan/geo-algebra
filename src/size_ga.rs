@@ -1,7 +1,7 @@
-pub trait SizeSA {
+pub trait SizeGA {
     fn size(&self) -> usize;
 }
 
-pub trait RangeSA {
+pub trait RangeGA {
     fn range(&self) -> usize;
 }

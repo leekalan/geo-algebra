@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    enumerate_sa::{EnumerateAndSortSA, EnumerateSA},
-    index_sa::{TryIndexSA, TryIndexSAMut},
-    size_sa::{RangeSA, SizeSA},
+    enumerate_ga::{EnumerateAndSortGA, EnumerateGA}, index_ga::{TryIndexGA, TryIndexGAMut}, iterate_values_ga::IterateValuesGA, size_ga::{RangeGA, SizeGA}
 };
 
 use super::Vectorize;
@@ -26,8 +24,8 @@ impl SparseVector {
         SparseVector::new(HashMap::from_iter(vector.into_enumerate()))
     }
 
-    pub fn insert(&mut self, dimension: usize, value: f64) {
-        self.dimension_map.insert(dimension, value);
+    pub fn insert(&mut self, dimension: usize, value: f64) -> Option<f64> {
+        self.dimension_map.insert(dimension, value)
     }
 
     pub fn hash_map(&self) -> &HashMap<usize, f64> {
@@ -67,30 +65,42 @@ impl IntoIterator for SparseVector {
     }
 }
 
-impl TryIndexSA<usize> for SparseVector {
+impl TryIndexGA<usize> for SparseVector {
     fn try_at(&self, index: usize) -> Option<&f64> {
         self.dimension_map.get(&index)
     }
 }
 
-impl TryIndexSAMut<usize> for SparseVector {
+impl TryIndexGAMut<usize> for SparseVector {
     fn try_at_mut(&mut self, index: usize) -> Option<&mut f64> {
         self.dimension_map.get_mut(&index)
     }
 }
 
-impl SizeSA for SparseVector {
+impl SizeGA for SparseVector {
     fn size(&self) -> usize {
         self.dimension_map.len()
     }
 }
-impl RangeSA for SparseVector {
+impl RangeGA for SparseVector {
     fn range(&self) -> usize {
         self.dimension_map.keys().max().map(|k| k + 1).unwrap_or(0)
     }
 }
 
-impl EnumerateSA<usize> for SparseVector {
+impl IterateValuesGA for SparseVector {
+    fn iterate_values(&self) -> impl Iterator<Item = &f64> {
+        self.dimension_map.values()
+    }
+    fn iterate_values_mut(&mut self) -> impl Iterator<Item = &mut f64> {
+        self.dimension_map.values_mut()
+    }
+    fn into_iterate_values(self) -> impl Iterator<Item = f64> {
+        self.dimension_map.into_values()
+    }
+}
+
+impl EnumerateGA<usize> for SparseVector {
     fn enumerate(&self) -> impl Iterator<Item = (usize, &f64)> {
         self.iter()
     }
@@ -101,7 +111,7 @@ impl EnumerateSA<usize> for SparseVector {
         self.into_iter()
     }
 }
-impl EnumerateAndSortSA<usize> for SparseVector {
+impl EnumerateAndSortGA<usize> for SparseVector {
     fn enumerate_and_sort(&self) -> impl Iterator<Item = (usize, &f64)> {
         let mut vec: Vec<_> = self.iter().collect();
         vec.sort_by_key(|(k, _)| *k);

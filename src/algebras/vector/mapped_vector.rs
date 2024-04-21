@@ -1,9 +1,7 @@
 use std::{borrow::Cow, collections::HashMap};
 
 use crate::{
-    enumerate_sa::{EnumerateAndSortSA, EnumerateSA},
-    index_sa::{TryIndexSA, TryIndexSAMut},
-    size_sa::{RangeSA, SizeSA},
+    enumerate_ga::{EnumerateAndSortGA, EnumerateGA}, index_ga::{TryIndexGA, TryIndexGAMut}, iterate_values_ga::IterateValuesGA, size_ga::{RangeGA, SizeGA}
 };
 
 use super::Vectorize;
@@ -74,27 +72,27 @@ impl<'a, T: Vectorize + Clone> IntoIterator for MappedVector<'a, T> {
     }
 }
 
-impl<'a, T: Vectorize + Clone> TryIndexSA<usize> for MappedVector<'a, T> {
+impl<'a, T: Vectorize + Clone> TryIndexGA<usize> for MappedVector<'a, T> {
     fn try_at(&self, index: usize) -> Option<&f64> {
         let mapped_index = *self.map.get(&index)?;
         self.vector.try_at(mapped_index)
     }
 }
 
-impl<'a, T: Vectorize + Clone> TryIndexSAMut<usize> for MappedVector<'a, T> {
+impl<'a, T: Vectorize + Clone> TryIndexGAMut<usize> for MappedVector<'a, T> {
     fn try_at_mut(&mut self, index: usize) -> Option<&mut f64> {
         let mapped_index = *self.map.get(&index)?;
         self.vector.to_mut().try_at_mut(mapped_index)
     }
 }
 
-impl<T: Vectorize + Clone + SizeSA> SizeSA for MappedVector<'_, T> {
+impl<T: Vectorize + Clone + SizeGA> SizeGA for MappedVector<'_, T> {
     fn size(&self) -> usize {
         self.vector.as_ref().size()
     }
 }
 
-impl<T: Vectorize + Clone> RangeSA for MappedVector<'_, T> {
+impl<T: Vectorize + Clone> RangeGA for MappedVector<'_, T> {
     fn range(&self) -> usize {
         self.vector
             .as_ref()
@@ -106,7 +104,19 @@ impl<T: Vectorize + Clone> RangeSA for MappedVector<'_, T> {
     }
 }
 
-impl<T: Vectorize + Clone> EnumerateSA<usize> for MappedVector<'_, T> {
+impl<T: Vectorize + Clone> IterateValuesGA for MappedVector<'_, T> {
+    fn iterate_values(&self) -> impl Iterator<Item = &f64> {
+        self.vector.as_ref().iterate_values()
+    }
+    fn iterate_values_mut(&mut self) -> impl Iterator<Item = &mut f64> {
+        self.vector.to_mut().iterate_values_mut()
+    }
+    fn into_iterate_values(self) -> impl Iterator<Item = f64> {
+        self.vector.into_owned().into_iterate_values()
+    }
+}
+
+impl<T: Vectorize + Clone> EnumerateGA<usize> for MappedVector<'_, T> {
     fn enumerate(&self) -> impl Iterator<Item = (usize, &f64)> {
         self.iter()
     }
@@ -117,7 +127,7 @@ impl<T: Vectorize + Clone> EnumerateSA<usize> for MappedVector<'_, T> {
         self.into_iter()
     }
 }
-impl<T: Vectorize + Clone> EnumerateAndSortSA<usize> for MappedVector<'_, T> {
+impl<T: Vectorize + Clone> EnumerateAndSortGA<usize> for MappedVector<'_, T> {
     fn enumerate_and_sort(&self) -> impl Iterator<Item = (usize, &f64)> {
         let mut vec: Vec<_> = self.enumerate().collect();
         vec.sort_by_key(|(k, _)| *k);
