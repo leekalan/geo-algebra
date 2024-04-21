@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use crate::index_sa::{TryIndexSA, TryIndexSAMut};
+use crate::{enumerate_sa::{EnumerateAndSortSA, EnumerateSA}, index_sa::{TryIndexSA, TryIndexSAMut}};
 
 use super::Vectorize;
 
@@ -12,10 +12,7 @@ pub struct MappedVector<'a, T: Vectorize + Clone> {
 
 impl<'a, T: Vectorize + Clone> MappedVector<'a, T> {
     pub fn new(vector: Cow<'a, T>, map: HashMap<usize, usize>) -> Self {
-        Self {
-            vector,
-            map,
-        }
+        Self { vector, map }
     }
 
     pub fn map(&self) -> &HashMap<usize, usize> {
@@ -34,12 +31,36 @@ impl<'a, T: Vectorize + Clone> MappedVector<'a, T> {
         self.vector.to_mut()
     }
 
-    //TODO iter() with custom iterator
+    pub fn iter(&self) -> impl Iterator<Item = (usize, &f64)> {
+        self.vector.as_ref().enumerate().map(|(k, v)| (*self.map.get(&k).unwrap_or(&k), v))
+    }
 
-    //TODO iter_mut() with custom iterator
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (usize, &mut f64)> {
+        self.vector.to_mut().enumerate_mut().map(|(k, v)| (*self.map.get(&k).unwrap_or(&k), v))
+    }
 }
 
-//TODO IntoIterator
+pub struct MappedVectorIter<'a> {
+    iter: Box<dyn Iterator<Item = (usize, f64)> + 'a>,
+    map: HashMap<usize, usize>,
+}
+impl Iterator for MappedVectorIter<'_> {
+    type Item = (usize, f64);
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|(k, v)| (*self.map.get(&k).unwrap_or(&k), v))
+    }
+}
+impl<'a, T: Vectorize + Clone> IntoIterator for MappedVector<'a, T> {
+    type Item = (usize, f64);
+    type IntoIter = MappedVectorIter<'a>;
+    fn into_iter(self) -> Self::IntoIter {
+        let heap_iter = Box::new(self.vector.into_owned().into_enumerate());
+        MappedVectorIter {
+            iter: heap_iter,
+            map: self.map,
+        }
+    }
+}
 
 impl<'a, T: Vectorize + Clone> TryIndexSA<usize> for MappedVector<'a, T> {
     fn try_at(&self, index: usize) -> Option<&f64> {
@@ -52,6 +73,35 @@ impl<'a, T: Vectorize + Clone> TryIndexSAMut<usize> for MappedVector<'a, T> {
     fn try_at_mut(&mut self, index: usize) -> Option<&mut f64> {
         let mapped_index = *self.map.get(&index)?;
         self.vector.to_mut().try_at_mut(mapped_index)
+    }
+}
+
+impl<T: Vectorize + Clone> EnumerateSA<usize> for MappedVector<'_, T> {
+    fn enumerate(&self) -> impl Iterator<Item = (usize, &f64)> {
+        self.iter()
+    }
+    fn enumerate_mut(&mut self) -> impl Iterator<Item = (usize, &mut f64)> {
+        self.iter_mut()
+    }
+    fn into_enumerate(self) -> impl Iterator<Item = (usize, f64)> {
+        self.into_iter()
+    }
+}
+impl<T: Vectorize + Clone> EnumerateAndSortSA<usize> for MappedVector<'_, T> {
+    fn enumerate_and_sort(&self) -> impl Iterator<Item = (usize, &f64)> {
+        let mut vec: Vec<_> = self.enumerate().collect();
+        vec.sort_by_key(|(k, _)| *k);
+        vec.into_iter()
+    }
+    fn enumerate_and_sort_mut(&mut self) -> impl Iterator<Item = (usize, &mut f64)> {
+        let mut vec: Vec<_> = self.enumerate_mut().collect();
+        vec.sort_by_key(|(k, _)| *k);
+        vec.into_iter()
+    }
+    fn into_enumerate_and_sort(self) -> impl Iterator<Item = (usize, f64)> {
+        let mut vec: Vec<_> = self.into_enumerate().collect();
+        vec.sort_by_key(|(k, _)| *k);
+        vec.into_iter()
     }
 }
 

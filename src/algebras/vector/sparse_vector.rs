@@ -1,8 +1,8 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::collections::HashMap;
 
-use crate::index_sa::{TryIndexSA, TryIndexSAMut};
+use crate::{enumerate_sa::{EnumerateAndSortSA, EnumerateSA}, index_sa::{TryIndexSA, TryIndexSAMut}};
 
-use super::{dynamic_vector, DynamicVector, MappedVector, Vectorize};
+use super::{DynamicVector, Vectorize};
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct SparseVector {
@@ -12,6 +12,14 @@ pub struct SparseVector {
 impl SparseVector {
     pub fn new(dimension_map: HashMap<usize, f64>) -> Self {
         Self { dimension_map }
+    }
+
+    pub fn new_empty() -> Self {
+        Self::default()
+    }
+
+    pub fn from_vector<T: Vectorize>(vector: T) -> Self {
+        SparseVector::new(HashMap::from_iter(vector.into_enumerate()))
     }
 
     pub fn insert(&mut self, dimension: usize, value: f64) {
@@ -26,28 +34,16 @@ impl SparseVector {
         &mut self.dimension_map
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&usize, &f64)> {
-        self.dimension_map.iter()
+    pub fn iter(&self) -> impl Iterator<Item = (usize, &f64)> {
+        self.dimension_map.iter().map(|(k, v)| (*k, v))
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (&usize, &mut f64)> {
-        self.dimension_map.iter_mut()
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (usize, &mut f64)> {
+        self.dimension_map.iter_mut().map(|(k, v)| (*k, v))
     }
 
     pub fn into_dynamic_vector(self) -> DynamicVector {
         todo!("fill in the gaps to have a complete vector")
-    }
-
-    // TODO
-    pub fn into_mapped_dynamic_vector<'a>(self) -> MappedVector<'a, DynamicVector> {
-        let dynamic_vector = DynamicVector::default();
-        MappedVector::new(Cow::Owned(dynamic_vector), todo!())
-    }
-
-    // TODO
-    pub fn into_mapped_ref_dynamic_vector(&self) -> MappedVector<'_, DynamicVector> {
-        let dynamic_vector = DynamicVector::default();
-        MappedVector::new(Cow::Borrowed(&dynamic_vector), todo!())
     }
 }
 
@@ -80,6 +76,35 @@ impl TryIndexSA<usize> for SparseVector {
 impl TryIndexSAMut<usize> for SparseVector {
     fn try_at_mut(&mut self, index: usize) -> Option<&mut f64> {
         self.dimension_map.get_mut(&index)
+    }
+}
+
+impl EnumerateSA<usize> for SparseVector {
+    fn enumerate(&self) -> impl Iterator<Item = (usize, &f64)> {
+        self.iter()
+    }
+    fn enumerate_mut(&mut self) -> impl Iterator<Item = (usize, &mut f64)> {
+        self.iter_mut()
+    }
+    fn into_enumerate(self) -> impl Iterator<Item = (usize, f64)> {
+        self.into_iter()
+    }
+}
+impl EnumerateAndSortSA<usize> for SparseVector {
+    fn enumerate_and_sort(&self) -> impl Iterator<Item = (usize, &f64)> {
+        let mut vec: Vec<_> = self.iter().collect();
+        vec.sort_by_key(|(k, _)| *k);
+        vec.into_iter()
+    }
+    fn enumerate_and_sort_mut(&mut self) -> impl Iterator<Item = (usize, &mut f64)> {
+        let mut vec: Vec<_> = self.iter_mut().collect();
+        vec.sort_by_key(|(k, _)| *k);
+        vec.into_iter()
+    }
+    fn into_enumerate_and_sort(self) -> impl Iterator<Item = (usize, f64)> {
+        let mut vec: Vec<_> = self.into_iter().collect();
+        vec.sort_by_key(|(k, _)| *k);
+        vec.into_iter()
     }
 }
 

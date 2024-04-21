@@ -14,6 +14,9 @@ pub use vector2::Vector2;
 pub use vector3::Vector3;
 pub use vector4::Vector4;
 
-use crate::index_sa::{TryIndexSA, TryIndexSAMut};
+use crate::{
+    enumerate_sa::EnumerateAndSortSA,
+    index_sa::{TryIndexSA, TryIndexSAMut},
+};
 
-pub trait Vectorize: TryIndexSA<usize> + TryIndexSAMut<usize> {}
+pub trait Vectorize: TryIndexSA<usize> + TryIndexSAMut<usize> + EnumerateAndSortSA<usize> {}

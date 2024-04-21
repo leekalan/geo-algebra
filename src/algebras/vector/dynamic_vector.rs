@@ -1,6 +1,4 @@
-use std::ops::{Deref, DerefMut};
-
-use crate::index_sa::{TryIndexSA, TryIndexSAMut};
+use crate::{enumerate_sa::{EnumerateAndSortSA, EnumerateSA}, index_sa::{TryIndexSA, TryIndexSAMut}};
 
 use super::Vectorize;
 
@@ -68,6 +66,29 @@ impl TryIndexSA<usize> for DynamicVector {
 impl TryIndexSAMut<usize> for DynamicVector {
     fn try_at_mut(&mut self, index: usize) -> Option<&mut f64> {
         self.dimensions.get_mut(index)
+    }
+}
+
+impl EnumerateSA<usize> for DynamicVector {
+    fn enumerate(&self) -> impl Iterator<Item = (usize, &f64)> {
+        self.iter().enumerate()
+    }
+    fn enumerate_mut(&mut self) -> impl Iterator<Item = (usize, &mut f64)> {
+        self.iter_mut().enumerate()
+    }
+    fn into_enumerate(self) -> impl Iterator<Item = (usize, f64)> {
+        self.into_iter().enumerate()
+    }
+}
+impl EnumerateAndSortSA<usize> for DynamicVector {
+    fn enumerate_and_sort(&self) -> impl Iterator<Item = (usize, &f64)> {
+        self.enumerate()
+    }
+    fn enumerate_and_sort_mut(&mut self) -> impl Iterator<Item = (usize, &mut f64)> {
+        self.enumerate_mut()
+    }
+    fn into_enumerate_and_sort(self) -> impl Iterator<Item = (usize, f64)> {
+        self.into_enumerate()
     }
 }
 

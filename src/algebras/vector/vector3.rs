@@ -1,4 +1,7 @@
-use crate::index_sa::{IndexSA, IndexSAMut, TryIndexSA, TryIndexSAMut};
+use crate::{
+    enumerate_sa::{EnumerateAndSortSA, EnumerateSA},
+    index_sa::{IndexSA, IndexSAMut, TryIndexSA, TryIndexSAMut},
+};
 
 use super::Vectorize;
 
@@ -15,28 +18,19 @@ impl Vector3 {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &f64> {
-        std::iter::once(&self.x)
-            .chain(std::iter::once(&self.y))
-            .chain(std::iter::once(&self.z))
+        [&self.x, &self.y, &self.z].into_iter()
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut f64> {
-        std::iter::once(&mut self.x)
-            .chain(std::iter::once(&mut self.y))
-            .chain(std::iter::once(&mut self.z))
+        [&mut self.x, &mut self.y, &mut self.z].into_iter()
     }
 }
 
 impl IntoIterator for Vector3 {
     type Item = f64;
-    type IntoIter = std::iter::Chain<
-        std::iter::Chain<std::iter::Once<Self::Item>, std::iter::Once<Self::Item>>,
-        std::iter::Once<Self::Item>,
-    >;
+    type IntoIter = std::array::IntoIter<Self::Item, 3>;
     fn into_iter(self) -> Self::IntoIter {
-        std::iter::once(self.x)
-            .chain(std::iter::once(self.y))
-            .chain(std::iter::once(self.z))
+        [self.x, self.y, self.z].into_iter()
     }
 }
 
@@ -86,6 +80,67 @@ impl TryIndexSAMut<usize> for Vector3 {
             2 => Some(&mut self.z),
             _ => None,
         }
+    }
+}
+
+impl EnumerateSA<Vector3Index> for Vector3 {
+    fn enumerate(&self) -> impl Iterator<Item = (Vector3Index, &f64)> {
+        [
+            (Vector3Index::X, &self.x),
+            (Vector3Index::Y, &self.y),
+            (Vector3Index::Z, &self.z),
+        ]
+        .into_iter()
+    }
+    fn enumerate_mut(&mut self) -> impl Iterator<Item = (Vector3Index, &mut f64)> {
+        [
+            (Vector3Index::X, &mut self.x),
+            (Vector3Index::Y, &mut self.y),
+            (Vector3Index::Z, &mut self.z),
+        ]
+        .into_iter()
+    }
+    fn into_enumerate(self) -> impl Iterator<Item = (Vector3Index, f64)> {
+        [
+            (Vector3Index::X, self.x),
+            (Vector3Index::Y, self.y),
+            (Vector3Index::Z, self.z),
+        ]
+        .into_iter()
+    }
+}
+impl EnumerateAndSortSA<Vector3Index> for Vector3 {
+    fn enumerate_and_sort(&self) -> impl Iterator<Item = (Vector3Index, &f64)> {
+        EnumerateSA::<Vector3Index>::enumerate(self)
+    }
+    fn enumerate_and_sort_mut(&mut self) -> impl Iterator<Item = (Vector3Index, &mut f64)> {
+        EnumerateSA::<Vector3Index>::enumerate_mut(self)
+    }
+    fn into_enumerate_and_sort(self) -> impl Iterator<Item = (Vector3Index, f64)> {
+        EnumerateSA::<Vector3Index>::into_enumerate(self)
+    }
+}
+
+impl EnumerateSA<usize> for Vector3 {
+    fn enumerate(&self) -> impl Iterator<Item = (usize, &f64)> {
+        self.iter().enumerate()
+    }
+    fn enumerate_mut(&mut self) -> impl Iterator<Item = (usize, &mut f64)> {
+        self.iter_mut().enumerate()
+    }
+    fn into_enumerate(self) -> impl Iterator<Item = (usize, f64)> {
+        self.into_iter().enumerate()
+    }
+}
+impl EnumerateAndSortSA<usize> for Vector3 {
+    fn enumerate_and_sort(&self) -> impl Iterator<Item = (usize, &f64)> {
+        EnumerateSA::<usize>::enumerate(self)
+    }
+    fn enumerate_and_sort_mut(&mut self) -> impl Iterator<Item = (usize, &mut f64)> {
+        EnumerateSA::<usize>::enumerate_mut(self)
+    }
+    fn into_enumerate_and_sort(self) -> impl Iterator<Item = (usize, f64)> {
+        EnumerateSA::<usize>::into_enumerate(self)
     }
 }
 
