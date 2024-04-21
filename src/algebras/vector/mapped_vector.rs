@@ -1,7 +1,10 @@
 use std::{borrow::Cow, collections::HashMap};
 
 use crate::{
-    enumerate_ga::{EnumerateAndSortGA, EnumerateGA}, index_ga::{TryIndexGA, TryIndexGAMut}, iterate_values_ga::IterateValuesGA, size_ga::{RangeGA, SizeGA}
+    enumerate_ga::{EnumerateAndSortGA, EnumerateGA},
+    index_ga::{TryIndexGA, TryIndexGAMut},
+    iterate_values_ga::IterateValuesGA,
+    size_ga::{RangeGA, SizeGA},
 };
 
 use super::Vectorize;

@@ -16,11 +16,21 @@ pub use vector3::Vector3;
 pub use vector4::Vector4;
 
 use crate::{
-    enumerate_ga::EnumerateAndSortGA, index_ga::{TryIndexGA, TryIndexGAMut}, iterate_values_ga::IterateValuesGA, operations::add_ga::{AddGA, AddRefGA}, size_ga::RangeGA
+    enumerate_ga::EnumerateAndSortGA,
+    index_ga::{TryIndexGA, TryIndexGAMut},
+    iterate_values_ga::IterateValuesGA,
+    operations::add_ga::{AddGA, AddRefGA},
+    size_ga::RangeGA,
 };
 
 pub trait Vectorize:
-    Sized + Default + TryIndexGA<usize> + TryIndexGAMut<usize> + RangeGA + IterateValuesGA + EnumerateAndSortGA<usize>
+    Sized
+    + Default
+    + TryIndexGA<usize>
+    + TryIndexGAMut<usize>
+    + RangeGA
+    + IterateValuesGA
+    + EnumerateAndSortGA<usize>
 {
     fn generic_vector(self) -> GenericVector<Self> {
         GenericVector { vector: self }

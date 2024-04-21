@@ -180,10 +180,13 @@ mod div {
 }
 
 mod dot {
-    use crate::{algebras::scalar::Scalar, operations::dot_ga::{DotGA, DotRefGA}};
+    use crate::{
+        algebras::scalar::Scalar,
+        operations::dot_ga::{DotGA, DotRefGA},
+    };
 
     use super::*;
-    
+
     impl<T: Vectorize, U: Vectorize> DotGA<U> for GenericVector<T> {
         type Output = Scalar;
         fn dot_ga(self, other: U) -> Self::Output {
@@ -198,12 +201,12 @@ mod dot {
             Scalar::new(scalar)
         }
     }
-    
+
     impl<T: Vectorize, U: Vectorize> DotRefGA<GenericVectorRef<'_, U>> for GenericVector<T> {
         type Output = Scalar;
         fn dot_ref_ga(self, other: &GenericVectorRef<U>) -> Self::Output {
             let other = other.vector;
-            
+
             let mut scalar = 0.;
 
             for (dimension, value) in self.vector.into_enumerate() {
@@ -211,7 +214,7 @@ mod dot {
                     scalar += value * *other_value
                 }
             }
-            
+
             Scalar::new(scalar)
         }
     }

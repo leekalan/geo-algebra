@@ -1,4 +1,7 @@
-use crate::{index_ga::{IndexGA, IndexGAMut}, operations::{add_ga::AddGA, div_ga::DivGA, mul_ga::MulGA, neg_ga::NegGA, sub_ga::SubGA}};
+use crate::{
+    index_ga::{IndexGA, IndexGAMut},
+    operations::{add_ga::AddGA, div_ga::DivGA, mul_ga::MulGA, neg_ga::NegGA, sub_ga::SubGA},
+};
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ScalarIndex;
