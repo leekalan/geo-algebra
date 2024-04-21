@@ -1,6 +1,10 @@
-use crate::{enumerate_sa::{EnumerateAndSortSA, EnumerateSA}, index_sa::{TryIndexSA, TryIndexSAMut}};
+use crate::{
+    enumerate_sa::{EnumerateAndSortSA, EnumerateSA},
+    index_sa::{TryIndexSA, TryIndexSAMut},
+    size_sa::{RangeSA, SizeSA},
+};
 
-use super::Vectorize;
+use super::{SparseVector, Vectorize};
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct DynamicVector {
@@ -10,6 +14,25 @@ pub struct DynamicVector {
 impl DynamicVector {
     pub fn new(dimensions: Vec<f64>) -> Self {
         Self { dimensions }
+    }
+
+    pub fn new_empty() -> Self {
+        Self::default()
+    }
+
+    pub fn from_sparse_vector(sparse_vector: SparseVector) -> Self {
+        let mut vec = Vec::with_capacity(sparse_vector.range());
+
+        for (dimension, value) in sparse_vector.into_enumerate_and_sort() {
+            vec.resize(dimension, 0f64);
+            vec.push(value)
+        }
+
+        Self { dimensions: vec }
+    }
+
+    pub fn from_vector(vector: impl Vectorize) -> Self {
+        Self::from_sparse_vector(SparseVector::from_vector(vector))
     }
 
     pub fn push(&mut self, dimension: f64) {
@@ -69,6 +92,17 @@ impl TryIndexSAMut<usize> for DynamicVector {
     }
 }
 
+impl SizeSA for DynamicVector {
+    fn size(&self) -> usize {
+        self.dimensions.len()
+    }
+}
+impl RangeSA for DynamicVector {
+    fn range(&self) -> usize {
+        self.dimensions.len()
+    }
+}
+
 impl EnumerateSA<usize> for DynamicVector {
     fn enumerate(&self) -> impl Iterator<Item = (usize, &f64)> {
         self.iter().enumerate()
@@ -93,3 +127,35 @@ impl EnumerateAndSortSA<usize> for DynamicVector {
 }
 
 impl Vectorize for DynamicVector {}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use super::*;
+
+    #[test]
+    fn test_extend_sparse_vector() {
+        let sparse_vector = SparseVector::new(HashMap::from([
+            (2, 3.),
+            (4, 7.),
+        ]));
+        let vector = DynamicVector::from_sparse_vector(sparse_vector);
+        assert_eq!(5, vector.size());
+        assert_eq!(5, vector.range());
+        assert_eq!(Some(&0.), vector.try_at(0));
+        assert_eq!(Some(&0.), vector.try_at(1));
+        assert_eq!(Some(&3.), vector.try_at(2));
+        assert_eq!(Some(&0.), vector.try_at(3));
+        assert_eq!(Some(&7.), vector.try_at(4));
+        assert_eq!(None, vector.try_at(5));
+    }
+
+
+    #[test]
+    fn test_sort_dynamic_vector() {
+        let vector = DynamicVector::new(vec![3., 1., 2.]);
+        let sorted_vector = vector.enumerate().collect::<Vec<_>>();
+        assert_eq!(sorted_vector, vec![(0, &3.), (1, &1.), (2, &2.)]);
+    }
+}

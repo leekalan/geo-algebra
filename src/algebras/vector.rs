@@ -17,6 +17,10 @@ pub use vector4::Vector4;
 use crate::{
     enumerate_sa::EnumerateAndSortSA,
     index_sa::{TryIndexSA, TryIndexSAMut},
+    size_sa::RangeSA,
 };
 
-pub trait Vectorize: TryIndexSA<usize> + TryIndexSAMut<usize> + EnumerateAndSortSA<usize> {}
+pub trait Vectorize:
+    TryIndexSA<usize> + TryIndexSAMut<usize> + RangeSA + EnumerateAndSortSA<usize>
+{
+}

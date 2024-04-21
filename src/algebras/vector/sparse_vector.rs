@@ -1,8 +1,12 @@
 use std::collections::HashMap;
 
-use crate::{enumerate_sa::{EnumerateAndSortSA, EnumerateSA}, index_sa::{TryIndexSA, TryIndexSAMut}};
+use crate::{
+    enumerate_sa::{EnumerateAndSortSA, EnumerateSA},
+    index_sa::{TryIndexSA, TryIndexSAMut},
+    size_sa::{RangeSA, SizeSA},
+};
 
-use super::{DynamicVector, Vectorize};
+use super::Vectorize;
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct SparseVector {
@@ -41,10 +45,6 @@ impl SparseVector {
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (usize, &mut f64)> {
         self.dimension_map.iter_mut().map(|(k, v)| (*k, v))
     }
-
-    pub fn into_dynamic_vector(self) -> DynamicVector {
-        todo!("fill in the gaps to have a complete vector")
-    }
 }
 
 impl AsRef<HashMap<usize, f64>> for SparseVector {
@@ -76,6 +76,17 @@ impl TryIndexSA<usize> for SparseVector {
 impl TryIndexSAMut<usize> for SparseVector {
     fn try_at_mut(&mut self, index: usize) -> Option<&mut f64> {
         self.dimension_map.get_mut(&index)
+    }
+}
+
+impl SizeSA for SparseVector {
+    fn size(&self) -> usize {
+        self.dimension_map.len()
+    }
+}
+impl RangeSA for SparseVector {
+    fn range(&self) -> usize {
+        self.dimension_map.keys().max().map(|k| k + 1).unwrap_or(0)
     }
 }
 

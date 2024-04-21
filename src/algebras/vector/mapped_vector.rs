@@ -1,6 +1,10 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use crate::{enumerate_sa::{EnumerateAndSortSA, EnumerateSA}, index_sa::{TryIndexSA, TryIndexSAMut}};
+use crate::{
+    enumerate_sa::{EnumerateAndSortSA, EnumerateSA},
+    index_sa::{TryIndexSA, TryIndexSAMut},
+    size_sa::{RangeSA, SizeSA},
+};
 
 use super::Vectorize;
 
@@ -32,11 +36,17 @@ impl<'a, T: Vectorize + Clone> MappedVector<'a, T> {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (usize, &f64)> {
-        self.vector.as_ref().enumerate().map(|(k, v)| (*self.map.get(&k).unwrap_or(&k), v))
+        self.vector
+            .as_ref()
+            .enumerate()
+            .map(|(k, v)| (*self.map.get(&k).unwrap_or(&k), v))
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (usize, &mut f64)> {
-        self.vector.to_mut().enumerate_mut().map(|(k, v)| (*self.map.get(&k).unwrap_or(&k), v))
+        self.vector
+            .to_mut()
+            .enumerate_mut()
+            .map(|(k, v)| (*self.map.get(&k).unwrap_or(&k), v))
     }
 }
 
@@ -47,7 +57,9 @@ pub struct MappedVectorIter<'a> {
 impl Iterator for MappedVectorIter<'_> {
     type Item = (usize, f64);
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(k, v)| (*self.map.get(&k).unwrap_or(&k), v))
+        self.iter
+            .next()
+            .map(|(k, v)| (*self.map.get(&k).unwrap_or(&k), v))
     }
 }
 impl<'a, T: Vectorize + Clone> IntoIterator for MappedVector<'a, T> {
@@ -73,6 +85,24 @@ impl<'a, T: Vectorize + Clone> TryIndexSAMut<usize> for MappedVector<'a, T> {
     fn try_at_mut(&mut self, index: usize) -> Option<&mut f64> {
         let mapped_index = *self.map.get(&index)?;
         self.vector.to_mut().try_at_mut(mapped_index)
+    }
+}
+
+impl<T: Vectorize + Clone + SizeSA> SizeSA for MappedVector<'_, T> {
+    fn size(&self) -> usize {
+        self.vector.as_ref().size()
+    }
+}
+
+impl<T: Vectorize + Clone> RangeSA for MappedVector<'_, T> {
+    fn range(&self) -> usize {
+        self.vector
+            .as_ref()
+            .enumerate()
+            .map(|(k, _)| *self.map.get(&k).unwrap_or(&k))
+            .max()
+            .map(|k| k + 1)
+            .unwrap_or(0)
     }
 }
 
