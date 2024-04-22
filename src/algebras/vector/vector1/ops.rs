@@ -1,7 +1,16 @@
 use crate::{
     algebras::scalar::Scalar,
     index_ga::{IndexGA, IndexGAMut},
-    operations::{add_ga::AddGA, div_ga::DivGA, inv_ga::InvGA, mul_ga::MulGA, sub_ga::SubGA},
+    operations::{
+        add_ga::AddGA,
+        div_ga::DivGA,
+        dot_ga::{DotGA, DotRefGA},
+        inv_ga::InvGA,
+        mag_ga::MagGA,
+        mul_ga::MulGA,
+        neg_ga::NegGA,
+        sub_ga::SubGA,
+    },
 };
 
 use super::{Vector1, Vector1Index};
@@ -31,6 +40,13 @@ impl std::ops::Sub<Vector1> for Vector1 {
     type Output = Vector1;
     fn sub(self, other: Vector1) -> Self::Output {
         self.sub_ga(other)
+    }
+}
+
+impl NegGA for Vector1 {
+    fn neg_ga(&mut self) {
+        let this = self.at_mut(Vector1Index::X);
+        *this = -*this;
     }
 }
 
@@ -100,5 +116,34 @@ impl std::ops::Div<Vector1> for Scalar {
     type Output = Vector1;
     fn div(self, other: Vector1) -> Self::Output {
         self.div_ga(other)
+    }
+}
+
+impl MagGA for Vector1 {
+    fn mag2_ga(&self) -> Scalar {
+        let scalar = self.at(Vector1Index::X).powi(2);
+        Scalar::new(scalar)
+    }
+}
+impl Vector1 {
+    pub fn mag2(&self) -> Scalar {
+        self.mag2_ga()
+    }
+
+    pub fn mag(&self) -> Scalar {
+        self.mag_ga()
+    }
+}
+
+impl DotRefGA<Vector1> for Vector1 {
+    type Output = Scalar;
+    fn dot_ref_ga(self, other: &Vector1) -> Self::Output {
+        let scalar = self.at(Vector1Index::X) * other.at(Vector1Index::X);
+        Scalar::new(scalar)
+    }
+}
+impl Vector1 {
+    pub fn dot(self, other: &Vector1) -> Scalar {
+        self.dot_ga(other)
     }
 }

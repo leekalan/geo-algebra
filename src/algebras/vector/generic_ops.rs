@@ -157,6 +157,25 @@ mod mul {
     }
 }
 
+mod inv {
+    use super::*;
+
+    impl<T: Vectorize> InvGA for GenericVector<T> {
+        type Output = T;
+        fn inv_ga(mut self) -> T {
+            for value in self.vector.iterate_values_mut() {
+                *value = value.recip();
+            }
+            self.vector
+        }
+    }
+    impl<T: Vectorize> GenericVector<T> {
+        pub fn inv(self) -> T {
+            self.inv_ga()
+        }
+    }
+}
+
 mod div {
     use crate::{algebras::scalar::Scalar, operations::div_ga::DivGA};
 
@@ -175,6 +194,42 @@ mod div {
         type Output = T;
         fn div(self, rhs: Scalar) -> Self::Output {
             self.div_ga(rhs)
+        }
+    }
+
+    impl<T: Vectorize> DivGA<GenericVector<T>> for Scalar {
+        type Output = T;
+        fn div_ga(self, other: GenericVector<T>) -> T {
+            let denominator = other.vector.generic_vector_ref().mag2();
+            other * (self / denominator)
+        }
+    }
+    impl<T: Vectorize> std::ops::Div<GenericVector<T>> for Scalar {
+        type Output = T;
+        fn div(self, rhs: GenericVector<T>) -> Self::Output {
+            self.div_ga(rhs)
+        }
+    }
+}
+
+mod mag {
+    use super::*;
+
+    impl<T: Vectorize> MagGA for GenericVectorRef<'_, T> {
+        fn mag2_ga(&self) -> Scalar {
+            let mut scalar = 0.;
+            for value in self.vector.iterate_values() {
+                scalar += value * value;
+            }
+            Scalar::new(scalar)
+        }
+    }
+    impl<T: Vectorize> GenericVectorRef<'_, T> {
+        pub fn mag2(self) -> Scalar {
+            self.mag2_ga()
+        }
+        pub fn mag(self) -> Scalar {
+            self.mag_ga()
         }
     }
 }

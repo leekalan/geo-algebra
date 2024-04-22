@@ -19,9 +19,14 @@ use crate::{
     enumerate_ga::EnumerateAndSortGA,
     index_ga::{TryIndexGA, TryIndexGAMut},
     iterate_values_ga::IterateValuesGA,
-    operations::add_ga::{AddGA, AddRefGA},
+    operations::{
+        add_ga::AddGA, div_ga::DivGA, dot_ga::DotGA, inv_ga::InvGA, mag_ga::MagGA, mul_ga::MulGA,
+        neg_ga::NegGA, sub_ga::SubGA,
+    },
     size_ga::RangeGA,
 };
+
+use super::scalar::Scalar;
 
 pub trait Vectorize:
     Sized
@@ -31,6 +36,16 @@ pub trait Vectorize:
     + RangeGA
     + IterateValuesGA
     + EnumerateAndSortGA<usize>
+    + AddGA<Self>
+    + SubGA<Self>
+    + NegGA
+    + MulGA<Scalar>
+    + InvGA
+    + DivGA<Scalar>
+    + MagGA
+    + DotGA<Self>
+where
+    Scalar: MulGA<Self> + DivGA<Self>,
 {
     fn generic_vector(self) -> GenericVector<Self> {
         GenericVector { vector: self }

@@ -40,13 +40,13 @@ impl IndexGAMut<ScalarIndex> for Scalar {
 
 impl AddGA<Scalar> for Scalar {
     type Output = Scalar;
-    fn add_ga(self, other: Scalar) -> Scalar {
+    fn add_ga(self, other: &Scalar) -> Scalar {
         Scalar(self.0 + other.0)
     }
 }
-impl std::ops::Add<Scalar> for Scalar {
+impl std::ops::Add<&Scalar> for Scalar {
     type Output = Scalar;
-    fn add(self, rhs: Scalar) -> Self::Output {
+    fn add(self, rhs: &Scalar) -> Self::Output {
         self.add_ga(rhs)
     }
 }
@@ -62,9 +62,9 @@ impl SubGA<Scalar> for Scalar {
         Scalar(self.0 - other.0)
     }
 }
-impl std::ops::Sub<Scalar> for Scalar {
+impl std::ops::Sub<&Scalar> for Scalar {
     type Output = Scalar;
-    fn sub(self, rhs: Scalar) -> Self::Output {
+    fn sub(self, rhs: &Scalar) -> Self::Output {
         self.sub_ga(rhs)
     }
 }
