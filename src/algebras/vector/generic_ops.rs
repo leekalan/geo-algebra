@@ -1,277 +1,160 @@
 use super::*;
 
-mod add {
+use std::ops::*;
+
+pub mod add {
     use super::*;
 
-    impl<T: Vectorize, U: Vectorize> AddGA<U> for GenericVector<T> {
+    impl<T: Vectorize, U: Vectorize> Add<&U> for GenericVector<T> {
         type Output = SparseVector;
-        fn add_ga(self, other: U) -> SparseVector {
-            let mut this = SparseVector::from_vector(self.vector);
-            let iter = other.into_enumerate();
-            for (dimension, value) in iter {
-                if let Some(current) = this.try_at_mut(dimension) {
-                    *current += value
-                } else {
-                    this.insert(dimension, value);
-                }
-            }
-            this
-        }
-    }
-    impl<T: Vectorize, U: Vectorize> std::ops::Add<U> for GenericVector<T> {
-        type Output = SparseVector;
-        fn add(self, rhs: U) -> Self::Output {
-            self.add_ga(rhs)
-        }
-    }
 
-    impl<T: Vectorize, U: Vectorize> AddRefGA<GenericVectorRef<'_, U>> for GenericVector<T> {
-        type Output = SparseVector;
-        fn add_ref_ga(self, other: &GenericVectorRef<U>) -> SparseVector {
-            let mut this = SparseVector::from_vector(self.vector);
-            let iter = other.vector.enumerate();
-            for (dimension, value) in iter {
-                if let Some(current) = this.try_at_mut(dimension) {
-                    *current += *value
-                } else {
-                    this.insert(dimension, *value);
-                }
-            }
-            this
+        fn add(self, rhs: &U) -> Self::Output {
+            SparseVector::from_vector(self.vector) + rhs
         }
     }
-    impl<T: Vectorize, U: Vectorize> std::ops::Add<GenericVectorRef<'_, U>> for GenericVector<T> {
+    impl<T: Vectorize, U: Vectorize> Add<&U> for GenericVectorRef<'_, T> {
         type Output = SparseVector;
-        fn add(self, rhs: GenericVectorRef<U>) -> Self::Output {
-            self.add_ref_ga(&rhs)
+
+        fn add(self, rhs: &U) -> Self::Output {
+            SparseVector::from_vector_ref(self.vector) + rhs
         }
     }
 }
 
-mod sub {
-    use crate::operations::sub_ga::{SubGA, SubRefGA};
-
+pub mod sub {
     use super::*;
 
-    impl<T: Vectorize, U: Vectorize> SubGA<U> for GenericVector<T> {
+    impl<T: Vectorize, U: Vectorize> Sub<&U> for GenericVector<T> {
         type Output = SparseVector;
-        fn sub_ga(self, other: U) -> SparseVector {
-            let mut this = SparseVector::from_vector(self.vector);
-            let iter = other.into_enumerate();
-            for (dimension, value) in iter {
-                if let Some(current) = this.try_at_mut(dimension) {
-                    *current -= value
-                } else {
-                    this.insert(dimension, -value);
-                }
-            }
-            this
-        }
-    }
-    impl<T: Vectorize, U: Vectorize> std::ops::Sub<U> for GenericVector<T> {
-        type Output = SparseVector;
-        fn sub(self, rhs: U) -> Self::Output {
-            self.sub_ga(rhs)
-        }
-    }
 
-    impl<T: Vectorize, U: Vectorize> SubRefGA<GenericVectorRef<'_, U>> for GenericVector<T> {
-        type Output = SparseVector;
-        fn sub_ref_ga(self, other: &GenericVectorRef<U>) -> SparseVector {
-            let mut this = SparseVector::from_vector(self.vector);
-            let iter = other.vector.enumerate();
-            for (dimension, value) in iter {
-                if let Some(current) = this.try_at_mut(dimension) {
-                    *current -= *value
-                } else {
-                    this.insert(dimension, -*value);
-                }
-            }
-            this
+        fn sub(self, rhs: &U) -> Self::Output {
+            SparseVector::from_vector(self.vector) - rhs
         }
     }
-    impl<T: Vectorize, U: Vectorize> std::ops::Sub<GenericVectorRef<'_, U>> for GenericVector<T> {
+    impl<T: Vectorize, U: Vectorize> Sub<&U> for GenericVectorRef<'_, T> {
         type Output = SparseVector;
-        fn sub(self, rhs: GenericVectorRef<U>) -> Self::Output {
-            self.sub_ref_ga(&rhs)
+
+        fn sub(self, rhs: &U) -> Self::Output {
+            SparseVector::from_vector_ref(self.vector) - rhs
         }
     }
 }
 
-mod neg {
-    use crate::operations::neg_ga::NegGA;
-
+pub mod neg {
     use super::*;
 
-    impl<T: Vectorize> NegGA for GenericVector<T> {
-        fn neg_ga(&mut self) {
-            for value in self.vector.iterate_values_mut() {
-                *value = -(*value);
-            }
-        }
-    }
-    impl<T: Vectorize> std::ops::Neg for GenericVector<T> {
+    impl<T: Vectorize> Neg for GenericVector<T> {
         type Output = T;
+
         fn neg(mut self) -> Self::Output {
-            self.neg_ga();
+            for value in self.vector.iterate_values_mut() {
+                *value = -*value;
+            }
             self.vector
         }
     }
 }
 
-mod mul {
-    use crate::{algebras::scalar::Scalar, operations::mul_ga::MulGA};
-
+pub mod mul {
     use super::*;
 
-    impl<T: Vectorize> MulGA<Scalar> for GenericVector<T> {
+    impl<T: Vectorize> Mul<Scalar> for GenericVector<T> {
         type Output = T;
-        fn mul_ga(mut self, other: Scalar) -> T {
+
+        fn mul(mut self, rhs: Scalar) -> Self::Output {
             for value in self.vector.iterate_values_mut() {
-                *value *= other.internal();
+                *value *= *rhs;
             }
             self.vector
         }
     }
-    impl<T: Vectorize> std::ops::Mul<Scalar> for GenericVector<T> {
-        type Output = T;
-        fn mul(self, rhs: Scalar) -> Self::Output {
-            self.mul_ga(rhs)
-        }
-    }
 
-    impl<T: Vectorize> MulGA<GenericVector<T>> for Scalar {
+    impl<T: Vectorize> Mul<GenericVector<T>> for Scalar {
         type Output = T;
-        fn mul_ga(self, mut other: GenericVector<T>) -> T {
-            for value in other.vector.iterate_values_mut() {
-                *value *= self.internal();
+
+        fn mul(self, mut rhs: GenericVector<T>) -> Self::Output {
+            for value in rhs.vector.iterate_values_mut() {
+                *value *= *self;
             }
-            other.vector
-        }
-    }
-    impl<T: Vectorize> std::ops::Mul<GenericVector<T>> for Scalar {
-        type Output = T;
-        fn mul(self, rhs: GenericVector<T>) -> Self::Output {
-            self.mul_ga(rhs)
+            rhs.vector
         }
     }
 }
 
-mod inv {
+pub mod abs {
+    use crate::operations::Abs;
+
     use super::*;
 
-    impl<T: Vectorize> InvGA for GenericVector<T> {
-        type Output = T;
-        fn inv_ga(mut self) -> T {
-            for value in self.vector.iterate_values_mut() {
-                *value = value.recip();
-            }
-            self.vector
-        }
-    }
-    impl<T: Vectorize> GenericVector<T> {
-        pub fn inv(self) -> T {
-            self.inv_ga()
+    impl<T: Vectorize> Abs for GenericVectorRef<'_, T> {
+        fn abs2(self) -> Scalar {
+            Scalar::new(self.vector.iterate_values().map(|v| v.powi(2)).sum())
         }
     }
 }
 
-mod div {
-    use crate::{algebras::scalar::Scalar, operations::div_ga::DivGA};
+pub mod inv {
+    use crate::operations::{Abs, Inv};
 
     use super::*;
 
-    impl<T: Vectorize> DivGA<Scalar> for GenericVector<T> {
+    impl<T: Vectorize> Inv for GenericVector<T> {
         type Output = T;
-        fn div_ga(mut self, other: Scalar) -> T {
-            for value in self.vector.iterate_values_mut() {
-                *value /= other.internal();
-            }
-            self.vector
+
+        fn inv(self) -> Self::Output {
+            let denominator = self.to_ref().abs2();
+            self / denominator
         }
     }
-    impl<T: Vectorize> std::ops::Div<Scalar> for GenericVector<T> {
+}
+
+pub mod div {
+    use crate::operations::{Abs, Inv};
+
+    use super::*;
+
+    impl<T: Vectorize> Div<Scalar> for GenericVector<T> {
         type Output = T;
+
+        #[allow(clippy::suspicious_arithmetic_impl)]
         fn div(self, rhs: Scalar) -> Self::Output {
-            self.div_ga(rhs)
+            let mult = rhs.inv();
+            self * mult
         }
     }
 
-    impl<T: Vectorize> DivGA<GenericVector<T>> for Scalar {
+    impl<T: Vectorize> Div<GenericVector<T>> for Scalar {
         type Output = T;
-        fn div_ga(self, other: GenericVector<T>) -> T {
-            let denominator = other.vector.generic_vector_ref().mag2();
-            other * (self / denominator)
-        }
-    }
-    impl<T: Vectorize> std::ops::Div<GenericVector<T>> for Scalar {
-        type Output = T;
+
         fn div(self, rhs: GenericVector<T>) -> Self::Output {
-            self.div_ga(rhs)
+            let mult = self / rhs.to_ref().abs2();
+            rhs * mult
         }
     }
 }
 
-mod mag {
-    use super::*;
-
-    impl<T: Vectorize> MagGA for GenericVectorRef<'_, T> {
-        fn mag2_ga(&self) -> Scalar {
-            let mut scalar = 0.;
-            for value in self.vector.iterate_values() {
-                scalar += value * value;
-            }
-            Scalar::new(scalar)
-        }
-    }
-    impl<T: Vectorize> GenericVectorRef<'_, T> {
-        pub fn mag2(self) -> Scalar {
-            self.mag2_ga()
-        }
-        pub fn mag(self) -> Scalar {
-            self.mag_ga()
-        }
-    }
-}
-
-mod dot {
-    use crate::{
-        algebras::scalar::Scalar,
-        operations::dot_ga::{DotGA, DotRefGA},
-    };
+pub mod dot {
+    use crate::operations::Dot;
 
     use super::*;
 
-    impl<T: Vectorize, U: Vectorize> DotGA<U> for GenericVector<T> {
+    impl<T: Vectorize, U: Vectorize> Dot<&U> for GenericVectorRef<'_, T> {
         type Output = Scalar;
-        fn dot_ga(self, other: U) -> Self::Output {
+
+        fn dot(self, rhs: &U) -> Self::Output {
             let mut scalar = 0.;
 
-            for (dimension, value) in self.vector.into_enumerate() {
-                if let Some(other_value) = other.try_at(dimension) {
-                    scalar += value * *other_value
+            if self.vector.range() < rhs.range() {
+                for (dimension, value) in self.vector.enumerate() {
+                    if let Some(other) = rhs.try_at(dimension) {
+                        scalar += value * other;
+                    }
                 }
-            }
-
-            Scalar::new(scalar)
-        }
-    }
-    impl<T: Vectorize> GenericVector<T> {
-        pub fn dot<U: Vectorize>(self, other: U) -> Scalar {
-            self.dot_ga(other)
-        }
-    }
-
-    impl<T: Vectorize, U: Vectorize> DotRefGA<GenericVectorRef<'_, U>> for GenericVector<T> {
-        type Output = Scalar;
-        fn dot_ref_ga(self, other: &GenericVectorRef<U>) -> Self::Output {
-            let other = other.vector;
-
-            let mut scalar = 0.;
-
-            for (dimension, value) in self.vector.into_enumerate() {
-                if let Some(other_value) = other.try_at(dimension) {
-                    scalar += value * *other_value
+            } else {
+                for (dimension, value) in rhs.enumerate() {
+                    if let Some(other) = self.vector.try_at(dimension) {
+                        scalar += value * other;
+                    }
                 }
             }
 

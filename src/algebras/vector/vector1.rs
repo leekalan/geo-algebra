@@ -1,3 +1,4 @@
+pub mod casts;
 pub mod ops;
 
 use crate::{
@@ -25,6 +26,14 @@ impl Vector1 {
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut f64> {
         self.dimensions.iter_mut()
+    }
+
+    pub fn x(&self) -> &f64 {
+        self.at(Vector1Index::X)
+    }
+
+    pub fn x_mut(&mut self) -> &mut f64 {
+        self.at_mut(Vector1Index::X)
     }
 }
 

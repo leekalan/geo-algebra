@@ -1,177 +1,202 @@
-use crate::{
-    algebras::scalar::Scalar,
-    iterate_values_ga::IterateValuesGA,
-    operations::{
-        add_ga::AddGA, div_ga::DivGA, dot_ga::DotGA, inv_ga::InvGA, mag_ga::MagGA, mul_ga::MulGA,
-        neg_ga::NegGA, sub_ga::SubGA,
-    },
-    size_ga::SizeGA,
-};
+use super::*;
 
-use super::DynamicVector;
+use std::ops::*;
 
-impl AddGA<DynamicVector> for DynamicVector {
-    type Output = DynamicVector;
-    fn add_ga(self, other: DynamicVector) -> Self::Output {
-        let (mut lhs, rhs) = if self.size() > other.size() {
-            (self, other)
-        } else {
-            (other, self)
-        };
+pub mod add {
+    use super::*;
 
-        for (lhs, rhs) in lhs.iterate_values_mut().zip(rhs.into_iterate_values()) {
-            *lhs += rhs
+    impl Add<&Self> for DynamicVector {
+        type Output = Self;
+
+        fn add(mut self, rhs: &Self) -> Self::Output {
+            self += rhs;
+            self
         }
-
-        lhs
     }
-}
-impl std::ops::Add<DynamicVector> for DynamicVector {
-    type Output = DynamicVector;
-    fn add(self, other: DynamicVector) -> Self::Output {
-        self.add_ga(other)
-    }
-}
 
-impl SubGA<DynamicVector> for DynamicVector {
-    type Output = DynamicVector;
-    fn sub_ga(self, other: DynamicVector) -> Self::Output {
-        let (mut lhs, rhs) = if self.size() > other.size() {
-            (self, other)
-        } else {
-            (other, self)
-        };
-
-        for (lhs, rhs) in lhs.iterate_values_mut().zip(rhs.into_iterate_values()) {
-            *lhs -= rhs
-        }
-
-        lhs
-    }
-}
-impl std::ops::Sub<DynamicVector> for DynamicVector {
-    type Output = DynamicVector;
-    fn sub(self, other: DynamicVector) -> Self::Output {
-        self.sub_ga(other)
-    }
-}
-
-impl NegGA for DynamicVector {
-    fn neg_ga(&mut self) {
-        for value in self.iterate_values_mut() {
-            *value = -(*value);
+    impl AddAssign<&Self> for DynamicVector {
+        fn add_assign(&mut self, rhs: &Self) {
+            let lhs_range = self.range();
+            let rhs_range = rhs.range();
+            if lhs_range > rhs_range {
+                for (lhs, rhs) in self.iterate_values_mut().zip(rhs.iterate_values()) {
+                    *lhs += rhs;
+                }
+            } else {
+                self.dimensions.reserve(rhs_range - lhs_range);
+                let rhs_end = unsafe { rhs.dimensions.get_unchecked(lhs_range..) };
+                for (lhs, rhs) in self.iterate_values_mut().zip(rhs.iterate_values()) {
+                    *lhs += rhs;
+                }
+                self.dimensions.extend(rhs_end.iter());
+            }
         }
     }
 }
-impl std::ops::Neg for DynamicVector {
-    type Output = DynamicVector;
-    fn neg(mut self) -> Self::Output {
-        self.neg_ga();
-        self
-    }
-}
 
-impl MulGA<Scalar> for DynamicVector {
-    type Output = DynamicVector;
-    fn mul_ga(mut self, other: Scalar) -> Self::Output {
-        for value in self.iterate_values_mut() {
-            *value *= other.internal();
+pub mod sub {
+    use super::*;
+
+    impl Sub<&Self> for DynamicVector {
+        type Output = Self;
+
+        fn sub(mut self, rhs: &Self) -> Self::Output {
+            self -= rhs;
+            self
         }
-        self
     }
-}
-impl std::ops::Mul<Scalar> for DynamicVector {
-    type Output = DynamicVector;
-    fn mul(self, other: Scalar) -> Self::Output {
-        self.mul_ga(other)
-    }
-}
 
-impl MulGA<DynamicVector> for Scalar {
-    type Output = DynamicVector;
-    fn mul_ga(self, mut other: DynamicVector) -> Self::Output {
-        for value in other.iterate_values_mut() {
-            *value *= self.internal();
+    impl SubAssign<&Self> for DynamicVector {
+        fn sub_assign(&mut self, rhs: &Self) {
+            let lhs_range = self.range();
+            let rhs_range = rhs.range();
+            if lhs_range > rhs_range {
+                for (lhs, rhs) in self.iterate_values_mut().zip(rhs.iterate_values()) {
+                    *lhs -= rhs;
+                }
+            } else {
+                self.dimensions.reserve(rhs_range - lhs_range);
+                let rhs_end = unsafe { rhs.dimensions.get_unchecked(lhs_range..) };
+                for (lhs, rhs) in self.iterate_values_mut().zip(rhs.iterate_values()) {
+                    *lhs -= rhs;
+                }
+                self.dimensions.extend(rhs_end.iter().map(|v| -v));
+            }
         }
-        other
-    }
-}
-impl std::ops::Mul<DynamicVector> for Scalar {
-    type Output = DynamicVector;
-    fn mul(self, other: DynamicVector) -> Self::Output {
-        self.mul_ga(other)
     }
 }
 
-impl InvGA for DynamicVector {
-    type Output = DynamicVector;
-    fn inv_ga(self) -> Self::Output {
-        let denominator = self.mag2();
-        self / denominator
-    }
-}
+pub mod neg {
+    use super::*;
 
-impl DivGA<Scalar> for DynamicVector {
-    type Output = DynamicVector;
-    fn div_ga(mut self, other: Scalar) -> Self::Output {
-        for value in self.iterate_values_mut() {
-            *value /= other.internal();
+    impl Neg for DynamicVector {
+        type Output = Self;
+
+        fn neg(mut self) -> Self::Output {
+            for value in self.iterate_values_mut() {
+                *value = -*value;
+            }
+            self
         }
-        self
-    }
-}
-impl std::ops::Div<Scalar> for DynamicVector {
-    type Output = DynamicVector;
-    fn div(self, other: Scalar) -> Self::Output {
-        self.div_ga(other)
     }
 }
 
-impl DivGA<DynamicVector> for Scalar {
-    type Output = DynamicVector;
-    fn div_ga(self, other: DynamicVector) -> Self::Output {
-        let mult = self / other.mag2();
-        other * mult
-    }
-}
-impl std::ops::Div<DynamicVector> for Scalar {
-    type Output = DynamicVector;
-    fn div(self, other: DynamicVector) -> Self::Output {
-        self.div_ga(other)
-    }
-}
+pub mod mul {
+    use crate::algebras::scalar::Scalar;
 
-impl MagGA for DynamicVector {
-    fn mag2_ga(&self) -> Scalar {
-        let mut scalar = 0.;
-        for value in self.iterate_values() {
-            scalar += value * value;
+    use super::*;
+
+    impl Mul<Scalar> for DynamicVector {
+        type Output = Self;
+
+        fn mul(mut self, rhs: Scalar) -> Self::Output {
+            self *= rhs;
+            self
         }
-        Scalar::new(scalar)
-    }
-}
-impl DynamicVector {
-    pub fn mag2(&self) -> Scalar {
-        self.mag2_ga()
     }
 
-    pub fn mag(&self) -> Scalar {
-        self.mag_ga()
-    }
-}
-
-impl DotGA<DynamicVector> for DynamicVector {
-    type Output = Scalar;
-    fn dot_ga(self, other: DynamicVector) -> Self::Output {
-        let mut scalar = 0.;
-        for (lhs, rhs) in self.into_iterate_values().zip(other.into_iterate_values()) {
-            scalar += lhs * rhs;
+    impl MulAssign<Scalar> for DynamicVector {
+        fn mul_assign(&mut self, rhs: Scalar) {
+            for value in self.iterate_values_mut() {
+                *value *= *rhs;
+            }
         }
-        Scalar::new(scalar)
+    }
+
+    impl Mul<DynamicVector> for Scalar {
+        type Output = DynamicVector;
+
+        fn mul(self, mut rhs: DynamicVector) -> Self::Output {
+            rhs *= self;
+            rhs
+        }
     }
 }
-impl DynamicVector {
-    pub fn dot(self, other: DynamicVector) -> Scalar {
-        self.dot_ga(other)
+
+pub mod abs {
+    use crate::{algebras::scalar::Scalar, operations::Abs};
+
+    use super::*;
+
+    impl Abs for &DynamicVector {
+        fn abs2(self) -> Scalar {
+            Scalar::new(self.iterate_values().map(|v| v.powi(2)).sum())
+        }
+    }
+}
+
+pub mod inv {
+    use crate::operations::{Abs, Inv, InvAssign};
+
+    use super::*;
+
+    impl Inv for DynamicVector {
+        type Output = Self;
+
+        fn inv(mut self) -> Self {
+            self.inv_assign();
+            self
+        }
+    }
+
+    impl InvAssign for DynamicVector {
+        fn inv_assign(&mut self) {
+            let denominator = self.abs2();
+            *self /= denominator;
+        }
+    }
+}
+
+pub mod div {
+    use crate::{
+        algebras::scalar::Scalar,
+        operations::{Abs, Inv},
+    };
+
+    use super::*;
+
+    impl Div<Scalar> for DynamicVector {
+        type Output = Self;
+
+        fn div(mut self, rhs: Scalar) -> Self::Output {
+            self /= rhs;
+            self
+        }
+    }
+
+    #[allow(clippy::suspicious_op_assign_impl)]
+    impl DivAssign<Scalar> for DynamicVector {
+        fn div_assign(&mut self, rhs: Scalar) {
+            let mult = rhs.inv();
+            *self *= mult;
+        }
+    }
+
+    impl Div<DynamicVector> for Scalar {
+        type Output = DynamicVector;
+
+        fn div(self, rhs: DynamicVector) -> Self::Output {
+            let mult = self / rhs.abs2();
+            rhs * mult
+        }
+    }
+}
+
+pub mod dot {
+    use crate::{algebras::scalar::Scalar, operations::Dot};
+
+    use super::*;
+
+    impl Dot<&Self> for &DynamicVector {
+        type Output = Scalar;
+
+        fn dot(self, other: &Self) -> Self::Output {
+            Scalar::new(
+                self.iterate_values()
+                    .zip(other.iterate_values())
+                    .map(|(a, b)| a * b)
+                    .sum(),
+            )
+        }
     }
 }

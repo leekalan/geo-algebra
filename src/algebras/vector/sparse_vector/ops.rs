@@ -1,134 +1,192 @@
-use std::{
-    mem::take,
-    ops::{Mul, Neg},
-};
+use super::*;
 
-use crate::{
-    algebras::{scalar::Scalar, vector::Vectorize},
-    operations::{
-        add_ga::AddRefGA, div_ga::DivGA, dot_ga::DotRefGA, mag_ga::MagGA, mul_ga::MulGA,
-        neg_ga::NegGA, sub_ga::SubRefGA,
-    },
-};
+use std::ops::*;
 
-use super::SparseVector;
+pub mod add {
+    use super::*;
 
-impl AddRefGA<SparseVector> for SparseVector {
-    type Output = SparseVector;
-    fn add_ref_ga(self, other: &SparseVector) -> Self::Output {
-        self.generic_vector() + other.generic_vector_ref()
+    impl<U: Vectorize> Add<&U> for SparseVector {
+        type Output = Self;
+
+        fn add(mut self, rhs: &U) -> Self::Output {
+            self += rhs;
+            self
+        }
     }
-}
-impl std::ops::Add<&SparseVector> for SparseVector {
-    type Output = SparseVector;
-    fn add(self, other: &SparseVector) -> Self::Output {
-        self.add_ref_ga(other)
-    }
-}
 
-impl SubRefGA<SparseVector> for SparseVector {
-    type Output = SparseVector;
-    fn sub_ref_ga(self, other: &SparseVector) -> Self::Output {
-        self.generic_vector() - other.generic_vector_ref()
-    }
-}
-impl std::ops::Sub<&SparseVector> for SparseVector {
-    type Output = SparseVector;
-    fn sub(self, other: &SparseVector) -> Self::Output {
-        self.sub_ref_ga(other)
+    impl<U: Vectorize> AddAssign<&U> for SparseVector {
+        fn add_assign(&mut self, rhs: &U) {
+            for (dimension, value) in rhs.enumerate() {
+                if let Some(current) = self.try_at_mut(dimension) {
+                    *current += value;
+                } else {
+                    self.insert(dimension, *value);
+                }
+            }
+        }
     }
 }
 
-impl NegGA for SparseVector {
-    fn neg_ga(&mut self) {
-        let this = take(self);
-        *self = take(&mut this.generic_vector().neg());
+pub mod sub {
+    use super::*;
+
+    impl<U: Vectorize> Sub<&U> for SparseVector {
+        type Output = Self;
+
+        fn sub(mut self, rhs: &U) -> Self::Output {
+            self -= rhs;
+            self
+        }
     }
-}
-impl Neg for SparseVector {
-    type Output = SparseVector;
-    fn neg(mut self) -> Self::Output {
-        self.neg_ga();
-        self
+
+    impl<U: Vectorize> SubAssign<&U> for SparseVector {
+        fn sub_assign(&mut self, rhs: &U) {
+            for (dimension, value) in rhs.enumerate() {
+                if let Some(current) = self.try_at_mut(dimension) {
+                    *current -= value;
+                } else {
+                    self.insert(dimension, -*value);
+                }
+            }
+        }
     }
 }
 
-impl MulGA<Scalar> for SparseVector {
-    type Output = SparseVector;
-    fn mul_ga(self, other: Scalar) -> Self::Output {
-        self.generic_vector() * other
-    }
-}
-impl Mul<Scalar> for SparseVector {
-    type Output = SparseVector;
-    fn mul(self, rhs: Scalar) -> Self::Output {
-        self.mul_ga(rhs)
+pub mod neg {
+    use super::*;
+
+    impl Neg for SparseVector {
+        type Output = Self;
+
+        fn neg(mut self) -> Self::Output {
+            for value in self.iterate_values_mut() {
+                *value = -*value;
+            }
+            self
+        }
     }
 }
 
-impl MulGA<SparseVector> for Scalar {
-    type Output = SparseVector;
-    fn mul_ga(self, other: SparseVector) -> Self::Output {
-        self * other.generic_vector()
+pub mod mul {
+    use crate::algebras::scalar::Scalar;
+
+    use super::*;
+
+    impl Mul<Scalar> for SparseVector {
+        type Output = Self;
+
+        fn mul(mut self, rhs: Scalar) -> Self::Output {
+            self *= rhs;
+            self
+        }
     }
-}
-impl Mul<SparseVector> for Scalar {
-    type Output = SparseVector;
-    fn mul(self, rhs: SparseVector) -> Self::Output {
-        self.mul_ga(rhs)
+
+    impl MulAssign<Scalar> for SparseVector {
+        fn mul_assign(&mut self, rhs: Scalar) {
+            for value in self.iterate_values_mut() {
+                *value *= *rhs;
+            }
+        }
+    }
+
+    impl Mul<SparseVector> for Scalar {
+        type Output = SparseVector;
+
+        fn mul(self, mut rhs: SparseVector) -> Self::Output {
+            rhs *= self;
+            rhs
+        }
     }
 }
 
-impl DivGA<Scalar> for SparseVector {
-    type Output = SparseVector;
-    fn div_ga(self, other: Scalar) -> Self::Output {
-        self.generic_vector() / other
-    }
-}
-impl std::ops::Div<Scalar> for SparseVector {
-    type Output = SparseVector;
-    fn div(self, rhs: Scalar) -> Self::Output {
-        self.div_ga(rhs)
+pub mod abs {
+    use crate::{algebras::scalar::Scalar, operations::Abs};
+
+    use super::*;
+
+    impl Abs for &SparseVector {
+        fn abs2(self) -> Scalar {
+            Scalar::new(self.iterate_values().map(|v| v.powi(2)).sum())
+        }
     }
 }
 
-impl DivGA<SparseVector> for Scalar {
-    type Output = SparseVector;
-    fn div_ga(self, other: SparseVector) -> Self::Output {
-        self / other.generic_vector()
-    }
-}
-impl std::ops::Div<SparseVector> for Scalar {
-    type Output = SparseVector;
-    fn div(self, rhs: SparseVector) -> Self::Output {
-        self.div_ga(rhs)
+pub mod inv {
+    use crate::operations::{Abs, Inv};
+
+    use super::*;
+
+    impl Inv for SparseVector {
+        type Output = Self;
+
+        fn inv(self) -> Self::Output {
+            let denominator = self.abs2();
+            self / denominator
+        }
     }
 }
 
-impl MagGA for SparseVector {
-    fn mag2_ga(&self) -> Scalar {
-        self.generic_vector_ref().mag2()
-    }
-}
-impl SparseVector {
-    pub fn mag2(&self) -> Scalar {
-        self.mag2_ga()
+pub mod div {
+    use crate::{
+        algebras::scalar::Scalar,
+        operations::{Abs, Inv},
+    };
+
+    use super::*;
+
+    impl Div<Scalar> for SparseVector {
+        type Output = Self;
+
+        fn div(mut self, rhs: Scalar) -> Self::Output {
+            self /= rhs;
+            self
+        }
     }
 
-    pub fn mag(&self) -> Scalar {
-        self.mag_ga()
+    impl DivAssign<Scalar> for SparseVector {
+        #[allow(clippy::suspicious_op_assign_impl)]
+        fn div_assign(&mut self, rhs: Scalar) {
+            let mult = rhs.inv();
+            *self *= mult;
+        }
+    }
+
+    impl Div<SparseVector> for Scalar {
+        type Output = SparseVector;
+
+        fn div(self, rhs: SparseVector) -> Self::Output {
+            let mult = self / rhs.abs2();
+            rhs * mult
+        }
     }
 }
 
-impl DotRefGA<SparseVector> for SparseVector {
-    type Output = Scalar;
-    fn dot_ref_ga(self, other: &SparseVector) -> Self::Output {
-        self.generic_vector()
-            .dot_ref_ga(&other.generic_vector_ref())
-    }
-}
-impl SparseVector {
-    pub fn dot(self, other: &SparseVector) -> Scalar {
-        self.dot_ref_ga(other)
+pub mod dot {
+    use crate::{algebras::scalar::Scalar, operations::Dot};
+
+    use super::*;
+
+    impl<U: Vectorize> Dot<&U> for &SparseVector {
+        type Output = Scalar;
+
+        fn dot(self, rhs: &U) -> Self::Output {
+            let mut scalar = 0.;
+
+            if self.range() < rhs.range() {
+                for (dimension, value) in self.enumerate() {
+                    if let Some(other) = rhs.try_at(dimension) {
+                        scalar += value * other;
+                    }
+                }
+            } else {
+                for (dimension, value) in rhs.enumerate() {
+                    if let Some(other) = self.try_at(dimension) {
+                        scalar += value * other;
+                    }
+                }
+            }
+
+            Scalar::new(scalar)
+        }
     }
 }

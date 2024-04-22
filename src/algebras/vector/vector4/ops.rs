@@ -1,203 +1,193 @@
-use crate::{
-    algebras::scalar::Scalar,
-    index_ga::{IndexGA, IndexGAMut},
-    operations::{
-        add_ga::AddGA, div_ga::DivGA, dot_ga::DotGA, inv_ga::InvGA, mag_ga::MagGA, mul_ga::MulGA,
-        neg_ga::NegGA, sub_ga::SubGA,
-    },
-};
+use super::*;
 
-use super::{Vector4, Vector4Index};
+use std::ops::*;
 
-impl AddGA<Vector4> for Vector4 {
-    type Output = Vector4;
-    fn add_ga(mut self, other: Vector4) -> Self::Output {
-        *self.at_mut(Vector4Index::X) += other.at(Vector4Index::X);
-        *self.at_mut(Vector4Index::Y) += other.at(Vector4Index::Y);
-        *self.at_mut(Vector4Index::Z) += other.at(Vector4Index::Z);
-        *self.at_mut(Vector4Index::W) += other.at(Vector4Index::W);
-        self
+pub mod add {
+    use super::*;
+
+    impl Add for Vector4 {
+        type Output = Self;
+
+        fn add(mut self, rhs: Self) -> Self::Output {
+            self += rhs;
+            self
+        }
     }
-}
-impl std::ops::Add<Vector4> for Vector4 {
-    type Output = Vector4;
-    fn add(self, other: Vector4) -> Self::Output {
-        self.add_ga(other)
+
+    impl AddAssign for Vector4 {
+        fn add_assign(&mut self, rhs: Self) {
+            *self.at_mut(Vector4Index::X) += rhs.at(Vector4Index::X);
+            *self.at_mut(Vector4Index::Y) += rhs.at(Vector4Index::Y);
+            *self.at_mut(Vector4Index::Z) += rhs.at(Vector4Index::Z);
+            *self.at_mut(Vector4Index::W) += rhs.at(Vector4Index::W);
+        }
     }
 }
 
-impl SubGA<Vector4> for Vector4 {
-    type Output = Vector4;
-    fn sub_ga(mut self, other: Vector4) -> Self::Output {
-        *self.at_mut(Vector4Index::X) -= other.at(Vector4Index::X);
-        *self.at_mut(Vector4Index::Y) -= other.at(Vector4Index::Y);
-        *self.at_mut(Vector4Index::Z) -= other.at(Vector4Index::Z);
-        *self.at_mut(Vector4Index::W) -= other.at(Vector4Index::W);
-        self
+pub mod sub {
+    use super::*;
+
+    impl Sub for Vector4 {
+        type Output = Self;
+
+        fn sub(mut self, rhs: Self) -> Self::Output {
+            self -= rhs;
+            self
+        }
     }
-}
-impl std::ops::Sub<Vector4> for Vector4 {
-    type Output = Vector4;
-    fn sub(self, other: Vector4) -> Self::Output {
-        self.sub_ga(other)
+
+    impl SubAssign for Vector4 {
+        fn sub_assign(&mut self, rhs: Self) {
+            *self.at_mut(Vector4Index::X) -= rhs.at(Vector4Index::X);
+            *self.at_mut(Vector4Index::Y) -= rhs.at(Vector4Index::Y);
+            *self.at_mut(Vector4Index::Z) -= rhs.at(Vector4Index::Z);
+            *self.at_mut(Vector4Index::W) -= rhs.at(Vector4Index::W);
+        }
     }
 }
 
-impl NegGA for Vector4 {
-    fn neg_ga(&mut self) {
-        let x = self.at_mut(Vector4Index::X);
-        *x = -*x;
-        let y = self.at_mut(Vector4Index::Y);
-        *y = -*y;
-        let z = self.at_mut(Vector4Index::Z);
-        *z = -*z;
-        let w = self.at_mut(Vector4Index::W);
-        *w = -*w;
-    }
-}
-impl std::ops::Neg for Vector4 {
-    type Output = Vector4;
-    fn neg(mut self) -> Self::Output {
-        self.neg_ga();
-        self
-    }
-}
+pub mod neg {
+    use super::*;
 
-impl MulGA<Scalar> for Vector4 {
-    type Output = Vector4;
-    fn mul_ga(mut self, other: Scalar) -> Self::Output {
-        *self.at_mut(Vector4Index::X) *= other.internal();
-        *self.at_mut(Vector4Index::Y) *= other.internal();
-        *self.at_mut(Vector4Index::Z) *= other.internal();
-        *self.at_mut(Vector4Index::W) *= other.internal();
-        self
-    }
-}
-impl std::ops::Mul<Scalar> for Vector4 {
-    type Output = Vector4;
-    fn mul(self, other: Scalar) -> Self::Output {
-        self.mul_ga(other)
+    impl Neg for Vector4 {
+        type Output = Self;
+
+        fn neg(mut self) -> Self::Output {
+            let x = self.at_mut(Vector4Index::X);
+            *x = x.neg();
+            let y = self.at_mut(Vector4Index::Y);
+            *y = y.neg();
+            let z = self.at_mut(Vector4Index::Z);
+            *z = z.neg();
+            let w = self.at_mut(Vector4Index::W);
+            *w = w.neg();
+            self
+        }
     }
 }
 
-impl MulGA<Vector4> for Scalar {
-    type Output = Vector4;
-    fn mul_ga(self, mut other: Vector4) -> Self::Output {
-        *other.at_mut(Vector4Index::X) *= self.internal();
-        *other.at_mut(Vector4Index::Y) *= self.internal();
-        *other.at_mut(Vector4Index::Z) *= self.internal();
-        *other.at_mut(Vector4Index::W) *= self.internal();
-        other
+pub mod mul {
+    use crate::algebras::scalar::Scalar;
+
+    use super::*;
+
+    impl Mul<Scalar> for Vector4 {
+        type Output = Vector4;
+
+        fn mul(mut self, rhs: Scalar) -> Self::Output {
+            self *= rhs;
+            self
+        }
     }
-}
-impl std::ops::Mul<Vector4> for Scalar {
-    type Output = Vector4;
-    fn mul(self, other: Vector4) -> Self::Output {
-        self.mul_ga(other)
+
+    impl MulAssign<Scalar> for Vector4 {
+        fn mul_assign(&mut self, rhs: Scalar) {
+            *self.at_mut(Vector4Index::X) *= *rhs;
+            *self.at_mut(Vector4Index::Y) *= *rhs;
+            *self.at_mut(Vector4Index::Z) *= *rhs;
+            *self.at_mut(Vector4Index::W) *= *rhs;
+        }
     }
-}
 
-impl InvGA for Vector4 {
-    type Output = Vector4;
-    fn inv_ga(mut self) -> Self {
-        let x = self.at(Vector4Index::X);
-        let y = self.at(Vector4Index::Y);
-        let z = self.at(Vector4Index::Z);
-        let w = self.at(Vector4Index::W);
+    impl Mul<Vector4> for Scalar {
+        type Output = Vector4;
 
-        let denominator = x * x + y * y + z * z + w * w;
-
-        *self.at_mut(Vector4Index::X) /= denominator;
-        *self.at_mut(Vector4Index::Y) /= denominator;
-        *self.at_mut(Vector4Index::Z) /= denominator;
-        *self.at_mut(Vector4Index::W) /= denominator;
-
-        self
-    }
-}
-impl Vector4 {
-    pub fn inv(self) -> Self {
-        self.inv_ga()
+        fn mul(self, mut rhs: Vector4) -> Self::Output {
+            rhs *= self;
+            rhs
+        }
     }
 }
 
-impl DivGA<Scalar> for Vector4 {
-    type Output = Vector4;
-    fn div_ga(mut self, other: Scalar) -> Self::Output {
-        *self.at_mut(Vector4Index::X) /= other.internal();
-        *self.at_mut(Vector4Index::Y) /= other.internal();
-        *self.at_mut(Vector4Index::Z) /= other.internal();
-        *self.at_mut(Vector4Index::W) /= other.internal();
-        self
-    }
-}
-impl std::ops::Div<Scalar> for Vector4 {
-    type Output = Vector4;
-    fn div(self, other: Scalar) -> Self::Output {
-        self.div_ga(other)
-    }
-}
+pub mod abs {
+    use crate::{algebras::scalar::Scalar, operations::Abs};
 
-impl DivGA<Vector4> for Scalar {
-    type Output = Vector4;
-    fn div_ga(self, mut other: Vector4) -> Self::Output {
-        let x = other.at(Vector4Index::X);
-        let y = other.at(Vector4Index::Y);
-        let z = other.at(Vector4Index::Z);
-        let w = other.at(Vector4Index::W);
+    use super::*;
 
-        let denominator = x * x + y * y + z * z + w * w;
-
-        let mult = self.internal() / denominator;
-
-        *other.at_mut(Vector4Index::X) *= mult;
-        *other.at_mut(Vector4Index::Y) *= mult;
-        *other.at_mut(Vector4Index::Z) *= mult;
-        *other.at_mut(Vector4Index::W) *= mult;
-
-        other
-    }
-}
-impl std::ops::Div<Vector4> for Scalar {
-    type Output = Vector4;
-    fn div(self, other: Vector4) -> Self::Output {
-        self.div_ga(other)
+    impl Abs for Vector4 {
+        fn abs2(self) -> Scalar {
+            let mut scalar;
+            scalar = self.at(Vector4Index::X).powi(2);
+            scalar += self.at(Vector4Index::Y).powi(2);
+            scalar += self.at(Vector4Index::Z).powi(2);
+            scalar += self.at(Vector4Index::W).powi(2);
+            Scalar::new(scalar)
+        }
     }
 }
 
-impl DotGA<Vector4> for Vector4 {
-    type Output = Scalar;
-    fn dot_ga(self, other: Vector4) -> Self::Output {
-        let mut scalar;
-        scalar = self.at(Vector4Index::X) * other.at(Vector4Index::X);
-        scalar += self.at(Vector4Index::Y) * other.at(Vector4Index::Y);
-        scalar += self.at(Vector4Index::Z) * other.at(Vector4Index::Z);
-        scalar += self.at(Vector4Index::W) * other.at(Vector4Index::W);
-        Scalar::new(scalar)
+pub mod inv {
+    use crate::operations::{Abs, Inv, InvAssign};
+
+    use super::*;
+
+    impl Inv for Vector4 {
+        type Output = Self;
+
+        fn inv(mut self) -> Self {
+            self.inv_assign();
+            self
+        }
     }
-}
-impl Vector4 {
-    pub fn dot(self, other: Vector4) -> Scalar {
-        self.dot_ga(other)
+
+    impl InvAssign for Vector4 {
+        fn inv_assign(&mut self) {
+            let denominator = self.abs2();
+            *self /= denominator;
+        }
     }
 }
 
-impl MagGA for Vector4 {
-    fn mag2_ga(&self) -> Scalar {
-        let mut scalar;
-        scalar = self.at(Vector4Index::X).powi(2);
-        scalar += self.at(Vector4Index::Y).powi(2);
-        scalar += self.at(Vector4Index::Z).powi(2);
-        scalar += self.at(Vector4Index::W).powi(2);
-        Scalar::new(scalar)
-    }
-}
-impl Vector4 {
-    pub fn mag2(&self) -> Scalar {
-        self.mag2_ga()
+pub mod div {
+    use crate::{
+        algebras::scalar::Scalar,
+        operations::{Abs, Inv},
+    };
+
+    use super::*;
+
+    impl Div<Scalar> for Vector4 {
+        type Output = Vector4;
+
+        fn div(mut self, rhs: Scalar) -> Self::Output {
+            self /= rhs;
+            self
+        }
     }
 
-    pub fn mag(&self) -> Scalar {
-        self.mag_ga()
+    #[allow(clippy::suspicious_op_assign_impl)]
+    impl DivAssign<Scalar> for Vector4 {
+        fn div_assign(&mut self, rhs: Scalar) {
+            let inv = rhs.inv();
+            *self *= inv;
+        }
+    }
+
+    impl Div<Vector4> for Scalar {
+        type Output = Vector4;
+
+        fn div(self, rhs: Vector4) -> Self::Output {
+            let mult = self / rhs.abs2();
+            rhs * mult
+        }
+    }
+}
+
+pub mod dot {
+    use crate::{algebras::scalar::Scalar, operations::Dot};
+
+    use super::*;
+
+    impl Dot<Vector4> for Vector4 {
+        type Output = Scalar;
+
+        fn dot(self, rhs: Vector4) -> Self::Output {
+            let mut scalar;
+            scalar = *self.at(Vector4Index::X) * *rhs.at(Vector4Index::X);
+            scalar += *self.at(Vector4Index::Y) * *rhs.at(Vector4Index::Y);
+            scalar += *self.at(Vector4Index::Z) * *rhs.at(Vector4Index::Z);
+            scalar += *self.at(Vector4Index::W) * *rhs.at(Vector4Index::W);
+            Scalar::new(scalar)
+        }
     }
 }

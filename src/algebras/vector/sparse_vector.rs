@@ -29,6 +29,10 @@ impl SparseVector {
         SparseVector::new(HashMap::from_iter(vector.into_enumerate()))
     }
 
+    pub fn from_vector_ref<T: Vectorize>(vector: &T) -> Self {
+        SparseVector::new(HashMap::from_iter(vector.enumerate().map(|(k, v)| (k, *v))))
+    }
+
     pub fn insert(&mut self, dimension: usize, value: f64) -> Option<f64> {
         self.dimension_map.insert(dimension, value)
     }
